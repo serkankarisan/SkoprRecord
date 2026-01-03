@@ -1,0 +1,25 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\SkoprRecord.Application\SkoprRecord.Application.csproj" />
+    <ProjectReference Include="..\SkoprRecord.Domain\SkoprRecord.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+
+    <PackageReference Include="NAudio" Version="2.2.1" />
+
+    <PackageReference Include="Vortice.Direct3D11" Version="3.8.2" />
+
+    <PackageReference Include="Vortice.MediaFoundation" Version="3.8.2" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+</Project>
+
