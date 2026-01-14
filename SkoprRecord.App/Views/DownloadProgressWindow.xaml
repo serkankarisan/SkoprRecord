@@ -1,0 +1,18 @@
+<Window x:Class="SkoprRecord.App.Views.DownloadProgressWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="İndiriliyor..." Height="150" Width="400" WindowStartupLocation="CenterScreen" ResizeMode="NoResize" WindowStyle="ToolWindow">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock x:Name="StatusText" Text="Başlatılıyor..." HorizontalAlignment="Center" Margin="0,0,0,10" FontWeight="SemiBold"/>
+        
+        <ProgressBar x:Name="ProgressBar" Grid.Row="1" Height="20" IsIndeterminate="True" Margin="0,0,0,10"/>
+        
+        <TextBlock x:Name="DetailText" Grid.Row="2" Text="" FontSize="11" Foreground="Gray" HorizontalAlignment="Center"/>
+    </Grid>
+</Window>
