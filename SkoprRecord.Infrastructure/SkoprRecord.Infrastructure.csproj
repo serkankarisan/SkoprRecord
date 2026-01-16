@@ -21,6 +21,13 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <DebugType>none</DebugType>
     <DebugSymbols>false</DebugSymbols>
+    
+    <!-- Proje Metadata -->
+    <Product>Skopr Record - Infrastructure Layer</Product>
+    <Description>Skopr Record altyapı katmanı - Ekran/ses kayıt implementasyonları</Description>
+    <Authors>Serkan Karışan</Authors>
+    <Company>Serkan Karışan</Company>
+    <Copyright>Copyright © 2026 Serkan Karışan. Tüm hakları saklıdır.</Copyright>
   </PropertyGroup>
 
 </Project>

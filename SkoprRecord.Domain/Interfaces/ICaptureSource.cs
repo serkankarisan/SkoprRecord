@@ -1,6 +1,4 @@
-﻿using SkoprRecord.Domain.Models;
-
-namespace SkoprRecord.Domain.Interfaces;
+﻿namespace SkoprRecord.Domain.Interfaces;
 
 /// <summary>
 /// Ekran yakalama kaynağı arayüzü.

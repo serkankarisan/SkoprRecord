@@ -1,9 +1,4 @@
-﻿using System;
-using System.Diagnostics;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
-using SkoprRecord.Domain.Interfaces;
-using SkoprRecord.Domain.Models;
+﻿using SkoprRecord.Domain.Interfaces;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.WindowsRuntime;
 using Vortice.Direct3D;

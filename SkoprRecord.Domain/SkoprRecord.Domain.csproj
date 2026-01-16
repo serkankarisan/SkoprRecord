@@ -6,6 +6,13 @@
     <Nullable>enable</Nullable>
     <DebugType>none</DebugType>
     <DebugSymbols>false</DebugSymbols>
+    
+    <!-- Proje Metadata -->
+    <Product>Skopr Record - Domain Layer</Product>
+    <Description>Skopr Record domain katmanı - Varlıklar, modeller ve enumlar</Description>
+    <Authors>Serkan Karışan</Authors>
+    <Company>Serkan Karışan</Company>
+    <Copyright>Copyright © 2026 Serkan Karışan. Tüm hakları saklıdır.</Copyright>
   </PropertyGroup>
 
 </Project>

@@ -1,11 +1,6 @@
-﻿using System;
-using System.Diagnostics;
-using System.IO;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
+﻿using SkoprRecord.Application.Helpers;
 using SkoprRecord.Domain.Interfaces;
-using SkoprRecord.Domain.Models;
-using SkoprRecord.Application.Helpers;
+using System.Diagnostics;
 
 namespace SkoprRecord.Infrastructure.Encoding;
 
