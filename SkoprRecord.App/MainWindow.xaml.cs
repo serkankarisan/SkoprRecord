@@ -1,11 +1,12 @@
 ﻿using Hardcodet.Wpf.TaskbarNotification;
-using System.Windows;
-using System.Windows.Input;
 using SkoprRecord.App.Services;
 using SkoprRecord.App.ViewModels;
 using SkoprRecord.App.Views;
 using SkoprRecord.Application.Services;
+using SkoprRecord.Domain.Enums;
 using SkoprRecord.Domain.Models;
+using System.Windows;
+using System.Windows.Input;
 
 namespace SkoprRecord.App;
 
@@ -24,6 +25,7 @@ public partial class MainWindow : Window
     private System.Windows.Controls.MenuItem? _startStopAudioItem;
     private System.Windows.Controls.MenuItem? _systemAudioMenuItem;
     private System.Windows.Controls.MenuItem? _micMenuItem;
+    private bool _isExiting = false;
 
     public MainWindow(MainWindowViewModel viewModel, SettingsService settingsService)
     {
@@ -41,15 +43,16 @@ public partial class MainWindow : Window
         // viewModel.Controller.Settings = _settings is enough.
         _viewModel.Controller.Settings = _settings;
 
-        _viewModel.PropertyChanged += OnViewModelPropertyChanged;
-
-        Loaded += OnLoaded;
-        Closed += OnClosed;
-        StateChanged += OnStateChanged;
-        MouseLeftButtonDown += OnMouseLeftButtonDown;
-
         // Sistem tepsisi (System Tray) kurulumu
         SetupTrayIcon();
+
+        // Window event'lerine abone ol
+        this.Closing += MainWindow_Closing;
+        this.StateChanged += OnStateChanged;
+        Loaded += OnLoaded;
+        Closed += OnClosed;
+        MouseLeftButtonDown += OnMouseLeftButtonDown;
+
     }
 
     /// <summary>
@@ -99,8 +102,56 @@ public partial class MainWindow : Window
             Hide();
             if (_settings.ShowNotifications)
             {
-            _trayIcon?.ShowBalloonTip("Skopr Record", "Uygulama arka planda çalışıyor. Ctrl+Shift+R ile kayıt başlatabilirsiniz.", BalloonIcon.Info);
+                _trayIcon?.ShowBalloonTip("Skopr Record", "Uygulama arka planda çalışıyor. Ctrl+Shift+R ile kayıt başlatabilirsiniz.", BalloonIcon.Info);
             }
+        }
+    }
+
+    /// <summary>
+    /// Pencere kapatılırken kayıt kontrolü yapar.
+    /// </summary>
+    private async void MainWindow_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
+    {
+        // If recording is active, ask for confirmation
+        if (_viewModel.Controller.CurrentState == RecorderState.Recording)
+        {
+            e.Cancel = true; // Cancel the close temporarily
+
+            if (_isExiting) return; // Prevent multiple dialogs
+            _isExiting = true;
+
+            var result = Views.SkoprMessageBox.Show(
+                "Kayıt devam ediyor. Kaydı durdurup uygulamayı kapatmak istiyor musunuz?",
+                "Kayıt Devam Ediyor",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                // Kaydı durdur ve dosya yolunu al
+                var filePath = await _viewModel.Controller.StopRecordingAsync(suppressEvent: true);
+
+                // Eğer dosya kaydedildiyse ve ayar aktifse, kaydetme penceresini manuel göster
+                if (!string.IsNullOrEmpty(filePath) && _settings.ConfirmSaveOnStop)
+                {
+                    HandleManualSave(filePath);
+                }
+
+                // Şimdi gerçekten kapat
+                _settingsService.Save(_settings);
+                _trayIcon?.Dispose();
+                System.Windows.Application.Current.Shutdown();
+            }
+            else
+            {
+                _isExiting = false;
+            }
+        }
+        else if (WindowState != WindowState.Minimized)
+        {
+            // Normal close (X button) when not recording - minimize to tray
+            e.Cancel = true;
+            WindowState = WindowState.Minimized;
         }
     }
 
@@ -129,16 +180,16 @@ public partial class MainWindow : Window
         contextMenu.Items.Add(new System.Windows.Controls.Separator());
 
         _startStopScreenItem = new System.Windows.Controls.MenuItem { Header = "🔴 Ekran Kaydı Başlat" };
-        _startStopScreenItem.Click += (s,e) => 
+        _startStopScreenItem.Click += (s, e) =>
         {
             if (_viewModel.StartScreenRecordingCommand.CanExecute(null)) _viewModel.StartScreenRecordingCommand.Execute(null);
         };
         contextMenu.Items.Add(_startStopScreenItem);
 
         _startStopAudioItem = new System.Windows.Controls.MenuItem { Header = "🎵 Ses Kaydı Başlat" };
-        _startStopAudioItem.Click += (s,e) =>
+        _startStopAudioItem.Click += (s, e) =>
         {
-             if (_viewModel.StartAudioRecordingCommand.CanExecute(null)) _viewModel.StartAudioRecordingCommand.Execute(null);
+            if (_viewModel.StartAudioRecordingCommand.CanExecute(null)) _viewModel.StartAudioRecordingCommand.Execute(null);
         };
         contextMenu.Items.Add(_startStopAudioItem);
 
@@ -162,11 +213,46 @@ public partial class MainWindow : Window
         contextMenu.Items.Add(new System.Windows.Controls.Separator());
 
         var exitItem = new System.Windows.Controls.MenuItem { Header = "❌ Çıkış" };
-        exitItem.Click += (s, e) =>
+        exitItem.Click += async (s, e) =>
         {
-            _settingsService.Save(_settings);
-            _trayIcon?.Dispose();
-            System.Windows.Application.Current.Shutdown();
+            if (_isExiting) return;
+
+            // Kayıt devam ediyorsa onay iste
+            if (_viewModel.Controller.CurrentState == RecorderState.Recording)
+            {
+                _isExiting = true;
+                var result = Views.SkoprMessageBox.Show(
+                    "Kayıt devam ediyor. Kaydı durdurup uygulamayı kapatmak istiyor musunuz?",
+                    "Kayıt Devam Ediyor",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question);
+
+                if (result == MessageBoxResult.Yes)
+                {
+                    // Kaydı durdur ve dosya yolunu al (Event tetiklemeyi bastır, manuel yöneteceğiz)
+                    var filePath = await _viewModel.Controller.StopRecordingAsync(suppressEvent: true);
+
+                    // Eğer dosya kaydedildiyse ve ayar aktifse, kaydetme penceresini manuel göster
+                    if (!string.IsNullOrEmpty(filePath) && _settings.ConfirmSaveOnStop)
+                    {
+                        HandleManualSave(filePath);
+                    }
+
+                    _settingsService.Save(_settings);
+                    _trayIcon?.Dispose();
+                    System.Windows.Application.Current.Shutdown();
+                }
+                else
+                {
+                    _isExiting = false;
+                }
+            }
+            else
+            {
+                _settingsService.Save(_settings);
+                _trayIcon?.Dispose();
+                System.Windows.Application.Current.Shutdown();
+            }
         };
         contextMenu.Items.Add(exitItem);
 
@@ -174,7 +260,7 @@ public partial class MainWindow : Window
         _trayIcon.TrayMouseDoubleClick += (s, e) => ShowWindow();
     }
 
-        // Bu method artık kullanılmıyor, lambda içinde halledildi.
+    // Bu method artık kullanılmıyor, lambda içinde halledildi.
 
     /// <summary>
     /// Kayıt durumuna göre tepsi simgesindeki metinleri günceller.
@@ -184,22 +270,22 @@ public partial class MainWindow : Window
         // Kayıt sırasında "Başlat" butonlarını "Durdur" a çeviriyoruz. 
         // Ekran ve Ses butonlarını tek bir "Durdur" butonuna çevirmek veya disable etmek gerek.
         // Basitlik için: Kayıt varsa ikisini de gizleyip "Durdur" ekleyebiliriz ama mevcut objeler üzerinden gidelim.
-        
+
         if (isRecording)
         {
-             if (_startStopScreenItem != null) _startStopScreenItem.Visibility = Visibility.Collapsed;
-             if (_startStopAudioItem != null) _startStopAudioItem.Header = "⏹️ Kaydı Durdur";
-             if (_startStopAudioItem != null) _startStopAudioItem.Click -= OnStopClick; // Avoid double sub
-             if (_startStopAudioItem != null) _startStopAudioItem.Click += OnStopClick;
-             // Audio item'ı geçici durdurma butonu olarak kullanalım.
+            if (_startStopScreenItem != null) _startStopScreenItem.Visibility = Visibility.Collapsed;
+            if (_startStopAudioItem != null) _startStopAudioItem.Header = "⏹️ Kaydı Durdur";
+            if (_startStopAudioItem != null) _startStopAudioItem.Click -= OnStopClick; // Çift aboneliği önle
+            if (_startStopAudioItem != null) _startStopAudioItem.Click += OnStopClick;
+            // Audio item'ı geçici durdurma butonu olarak kullanalım.
         }
         else
         {
-             if (_startStopScreenItem != null) { _startStopScreenItem.Visibility = Visibility.Visible; _startStopScreenItem.Header = "🔴 Ekran Kaydı Başlat"; }
-             if (_startStopAudioItem != null) { _startStopAudioItem.Visibility = Visibility.Visible; _startStopAudioItem.Header = "🎵 Ses Kaydı Başlat"; }
-             // Click eventlerini resetlemek gerekir ama lambda ile ekledik.
-             // Daha temiz bir yapı kuralım: SetupTrayIcon'u her durum değişiminde yenilemek yerine, 
-             // menü durumunu yönetmek daha doğru. Ancak şimdilik basitçe tooltip güncelleyelim.
+            if (_startStopScreenItem != null) { _startStopScreenItem.Visibility = Visibility.Visible; _startStopScreenItem.Header = "🔴 Ekran Kaydı Başlat"; }
+            if (_startStopAudioItem != null) { _startStopAudioItem.Visibility = Visibility.Visible; _startStopAudioItem.Header = "🎵 Ses Kaydı Başlat"; }
+            // Click eventlerini resetlemek gerekir ama lambda ile ekledik.
+            // Daha temiz bir yapı kuralım: SetupTrayIcon'u her durum değişiminde yenilemek yerine, 
+            // menü durumunu yönetmek daha doğru. Ancak şimdilik basitçe tooltip güncelleyelim.
         }
 
         if (_trayIcon != null) _trayIcon.ToolTipText = isRecording ? "Skopr Record - Kayıt yapılıyor..." : "Skopr Record";
@@ -207,7 +293,7 @@ public partial class MainWindow : Window
 
     private void OnStopClick(object sender, RoutedEventArgs e)
     {
-         if (_viewModel.StopRecordingCommand.CanExecute(null)) _viewModel.StopRecordingCommand.Execute(null);
+        if (_viewModel.StopRecordingCommand.CanExecute(null)) _viewModel.StopRecordingCommand.Execute(null);
     }
 
     private void OpenSettings()
@@ -216,6 +302,9 @@ public partial class MainWindow : Window
         SettingsButton_Click(this, new RoutedEventArgs());
     }
 
+    /// <summary>
+    /// Pencereyi normal boyuta getirir ve öne çıkarır.
+    /// </summary>
     private void ShowWindow()
     {
         Show();
@@ -223,11 +312,19 @@ public partial class MainWindow : Window
         Activate();
     }
 
+    /// <summary>
+    /// Pencereyi sürüklemek için sol tık olayını işler.
+    /// </summary>
     private void OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
         if (e.ButtonState == MouseButtonState.Pressed) DragMove();
     }
 
+
+
+    /// <summary>
+    /// Pencere yüklendiğinde servisleri başlatır ve gerekirse tepsiye küçültür.
+    /// </summary>
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
         _hotkeyService = new GlobalHotkeyService(this);
@@ -254,7 +351,11 @@ public partial class MainWindow : Window
             UpdateTrayMenuState(true);
             if (_settings.ShowNotifications)
             {
-                _trayIcon?.ShowBalloonTip("Kayıt Başladı", "Ekran kaydı devam ediyor. Durdurmak için Ctrl+Shift+R basın.", BalloonIcon.Info);
+                string title = _viewModel.Controller.Settings.IsAudioOnly ? "Ses Kaydı Başladı" : "Kayıt Başladı";
+                string body = _viewModel.Controller.Settings.IsAudioOnly
+                    ? "Ses kaydı devam ediyor. Durdurmak için Ctrl+Shift+R basın."
+                    : "Ekran kaydı devam ediyor. Durdurmak için Ctrl+Shift+R basın.";
+                _trayIcon?.ShowBalloonTip(title, body, BalloonIcon.Info);
             }
         });
     }
@@ -271,7 +372,7 @@ public partial class MainWindow : Window
 
             if (!System.IO.File.Exists(filePath))
             {
-                MessageBox.Show("Kayıt dosyası oluşturulamadı!", "Hata", MessageBoxButton.OK, MessageBoxImage.Error);
+                Views.SkoprMessageBox.Show("Kayıt dosyası oluşturulamadı!", "Hata", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
 
@@ -316,11 +417,11 @@ public partial class MainWindow : Window
     {
         Dispatcher.Invoke(() =>
         {
-            if (_viewModel.StopRecordingCommand.CanExecute(null)) 
+            if (_viewModel.StopRecordingCommand.CanExecute(null))
             {
                 _viewModel.StopRecordingCommand.Execute(null);
             }
-            else if (_viewModel.StartScreenRecordingCommand.CanExecute(null)) 
+            else if (_viewModel.StartScreenRecordingCommand.CanExecute(null))
             {
                 _viewModel.StartScreenRecordingCommand.Execute(null);
             }
@@ -333,15 +434,104 @@ public partial class MainWindow : Window
         _trayIcon?.Dispose();
     }
 
-    private void MinimizeButton_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
+    /// <summary>
+    /// Küçültme (-) butonuna tıklandığında pencereyi simge durumuna getirir.
+    /// </summary>
+    private void MinimizeButton_Click(object sender, RoutedEventArgs e)
+    {
+        WindowState = WindowState.Minimized;
+    }
 
-    private void CloseButton_Click(object sender, RoutedEventArgs e) => Hide();
+    /// <summary>
+    /// Kapat (X) butonuna tıklandığında çıkış sürecini başlatır.
+    /// </summary>
+    private async void CloseButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_isExiting) return;
 
+        // Kayıt devam ediyorsa onay iste
+        if (_viewModel.Controller.CurrentState == RecorderState.Recording)
+        {
+            _isExiting = true;
+            var result = Views.SkoprMessageBox.Show(
+                "Kayıt devam ediyor. Kaydı durdurup uygulamayı kapatmak istiyor musunuz?",
+                "Kayıt Devam Ediyor",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                // Kaydı durdur ve dosya yolunu al
+                var filePath = await _viewModel.Controller.StopRecordingAsync(suppressEvent: true);
+
+                // Eğer dosya kaydedildiyse ve ayar aktifse, kaydetme penceresini manuel göster
+                if (!string.IsNullOrEmpty(filePath) && _settings.ConfirmSaveOnStop)
+                {
+                    HandleManualSave(filePath);
+                }
+
+                System.Windows.Application.Current.Shutdown();
+            }
+            else
+            {
+                _isExiting = false;
+            }
+        }
+        else
+        {
+            System.Windows.Application.Current.Shutdown();
+        }
+    }
+
+    /// <summary>
+    /// Çıkış sırasında manuel kaydetme işlemi için yardımcı metod.
+    /// Event mekanizması çıkışta güvenilir olmadığı için doğrudan çağrılır.
+    /// </summary>
+    private void HandleManualSave(string filePath)
+    {
+        try
+        {
+            var ext = System.IO.Path.GetExtension(filePath).ToLowerInvariant();
+            var filter = ext == ".mp3" ? "MP3 Audio (*.mp3)|*.mp3" : "MPEG-4 Video (*.mp4)|*.mp4";
+
+            var saveFileDialog = new Microsoft.Win32.SaveFileDialog
+            {
+                FileName = System.IO.Path.GetFileName(filePath),
+                DefaultExt = ext,
+                Filter = filter,
+                InitialDirectory = System.IO.Path.GetDirectoryName(filePath) ?? _settings.OutputFolder
+            };
+
+            if (saveFileDialog.ShowDialog() == true)
+            {
+                string destinationPath = saveFileDialog.FileName;
+                if (!string.Equals(filePath, destinationPath, StringComparison.OrdinalIgnoreCase))
+                {
+                    try
+                    {
+                        if (System.IO.File.Exists(destinationPath)) System.IO.File.Delete(destinationPath);
+                        System.IO.File.Move(filePath, destinationPath);
+                    }
+                    catch (Exception ex) { MessageBox.Show($"Dosya taşınırken hata: {ex.Message}"); }
+                }
+            }
+            else
+            {
+                try { System.IO.File.Delete(filePath); } catch { }
+            }
+        }
+        catch { /* Çıkış sırasında hata olursa yoksay */ }
+    }
+
+
+
+    /// <summary>
+    /// Ayarlar butonuna tıklandığında ayarlar penceresini açar.
+    /// </summary>
     private void SettingsButton_Click(object sender, RoutedEventArgs e)
     {
         var settingsClone = _settings.Clone();
         var settingsWindow = new SettingsWindow(settingsClone);
-        // Explicitly center and show independently to avoid anchoring to MainWindow's offset
         settingsWindow.WindowStartupLocation = WindowStartupLocation.CenterScreen;
 
         if (settingsWindow.ShowDialog() == true)

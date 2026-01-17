@@ -1,14 +1,9 @@
-﻿using System.Windows;
-using System.Windows.Input;
-using System.Windows.Threading;
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Microsoft.Extensions.Logging;
-using SkoprRecord.App.Services;
-using SkoprRecord.App.Views;
+using SkoprRecord.Application.Helpers;
 using SkoprRecord.Application.Interfaces;
 using SkoprRecord.Domain.Enums;
-using SkoprRecord.Application.Helpers;
+using System.Windows.Threading;
 
 namespace SkoprRecord.App.ViewModels;
 
@@ -40,6 +35,21 @@ public partial class MainWindowViewModel : ObservableObject
     /// <summary> Kayıt süresini (00:00:00) ekranda gösterir. </summary>
     [ObservableProperty]
     private string _elapsedTime = "00:00:00";
+
+
+
+    // Durdur Butonu Özellikleri
+    /// <summary> Durdur butonunun metni (DURDUR / KAYDI DURDUR). </summary>
+    [ObservableProperty]
+    private string _stopButtonText = "DURDUR";
+
+    /// <summary> Durdur butonunun arka plan rengi. </summary>
+    [ObservableProperty]
+    private System.Windows.Media.Brush _stopButtonBackground = System.Windows.Media.Brushes.Gray; // UpdateStatus metodunda güncellenir
+
+    /// <summary> Başlat butonlarının görünürlüğü </summary>
+    [ObservableProperty]
+    private System.Windows.Visibility _startButtonsVisibility = System.Windows.Visibility.Visible;
 
     /// <summary> Sistem sesinin kaydedilip edilmeyeceği ayarı. </summary>
     [ObservableProperty]
@@ -78,14 +88,14 @@ public partial class MainWindowViewModel : ObservableObject
     {
         _controller = controller;
         _controller.StateChanged += OnStateChanged;
-        
+
         // Mevcut ayarları yükle
         _captureSystemAudio = _controller.Settings.CaptureSystemAudio;
         _captureMicrophone = _controller.Settings.CaptureMicrophone;
 
         UpdateStatus();
 
-        // Monitörleri listele
+        // Monitörleri listele ve yenile
         RefreshMonitors();
 
         // Kayıt süresi sayacı kurulumu
@@ -96,6 +106,9 @@ public partial class MainWindowViewModel : ObservableObject
         _timer.Tick += OnTimerTick;
     }
 
+    /// <summary>
+    /// Bağlı monitörleri tarar ve listeyi günceller.
+    /// </summary>
     private void RefreshMonitors()
     {
         var monitors = MonitorEnumerationHelper.GetMonitors();
@@ -104,7 +117,7 @@ public partial class MainWindowViewModel : ObservableObject
         {
             MonitorSelectionVisibility = System.Windows.Visibility.Visible;
             AvailableMonitors = monitors;
-            
+
             // Varsayılan olarak Birincil Ekranı seç
             var primaryMonitor = AvailableMonitors.FirstOrDefault(m => m.IsPrimary);
             SelectedMonitor = primaryMonitor ?? AvailableMonitors.First();
@@ -170,6 +183,20 @@ public partial class MainWindowViewModel : ObservableObject
         StartScreenRecordingCommand.NotifyCanExecuteChanged();
         StartAudioRecordingCommand.NotifyCanExecuteChanged();
         StopRecordingCommand.NotifyCanExecuteChanged();
+
+        // Durdur Butonu görünümünü güncelle
+        if (_controller.CurrentState == RecorderState.Recording)
+        {
+            StopButtonText = "KAYDI DURDUR";
+            StopButtonBackground = System.Windows.Media.Brushes.Red; // Veya #FF3C3C
+            StartButtonsVisibility = System.Windows.Visibility.Collapsed;
+        }
+        else
+        {
+            StopButtonText = "DURDUR";
+            StopButtonBackground = (System.Windows.Media.Brush)new System.Windows.Media.BrushConverter().ConvertFrom("#3D3D3D")!; // StaticResource karşılığı
+            StartButtonsVisibility = System.Windows.Visibility.Visible;
+        }
     }
 
     /// <summary> Duruma göre arayüzdeki ikon rengini belirler. </summary>

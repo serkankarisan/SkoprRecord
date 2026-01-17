@@ -1,18 +1,16 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Serilog;
-using System.IO;
-using System.Windows;
-using SkoprRecord.App.Services;
 using SkoprRecord.App.ViewModels;
 using SkoprRecord.App.Views;
+using SkoprRecord.Application.Helpers;
 using SkoprRecord.Application.Interfaces;
 using SkoprRecord.Application.Services;
 using SkoprRecord.Domain.Interfaces;
 using SkoprRecord.Infrastructure.Audio;
 using SkoprRecord.Infrastructure.Capture;
 using SkoprRecord.Infrastructure.Encoding;
-using SkoprRecord.Application.Helpers;
+using System.IO;
+using System.Windows;
 
 namespace SkoprRecord.App;
 
@@ -27,8 +25,9 @@ public partial class App : System.Windows.Application
     /// <summary>
     /// Uygulama başlatıldığında tetiklenen olay.
     /// Günlükleme sistemini kurar, bağımlılıkları kaydeder ve ana pencereyi açar.
+    /// FFmpeg kontrolü arka planda asenkron olarak yapılır (startup performansı için).
     /// </summary>
-    private async void OnStartup(object sender, StartupEventArgs e)
+    private void OnStartup(object sender, StartupEventArgs e)
     {
         // 1. Günlükleme Sistemini Kur (Serilog)
         var appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "SkoprRecord");
@@ -42,51 +41,12 @@ public partial class App : System.Windows.Application
         Log.Information("Skopr Record başlatılıyor...");
         Log.Information("Log dosyası: {Path}", logPath);
 
-        // 2. FFmpeg Gereksinim Kontrolü
-        if (!FfmpegHelper.IsInstalled())
-        {
-            var result = MessageBox.Show(
-                "FFmpeg bulunamadı. Video kaydı için FFmpeg gereklidir.\n\n" +
-                "Şimdi otomatik olarak indirilsin mi? (yaklaşık 100MB)",
-                "FFmpeg Gerekli",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Question
-            );
-
-            if (result == MessageBoxResult.Yes)
-            {
-                var downloadWindow = new DownloadProgressWindow();
-                downloadWindow.Show();
-
-                var progress = new Progress<string>(msg => 
-                {
-                    Log.Information($"FFmpeg: {msg}");
-                    downloadWindow.UpdateProgress(msg);
-                });
-
-                var success = await FfmpegHelper.DownloadAndInstallAsync(progress);
-                
-                downloadWindow.Close();
-
-                if (!success)
-                {
-                    MessageBox.Show(
-                        "FFmpeg indirilemedi. Lütfen manuel olarak kurun:\n" +
-                        "https://ffmpeg.org/download.html",
-                        "Hata",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Error
-                    );
-                }
-            }
-        }
-
-        // 3. Bağımlılık Enjeksiyonu (DI) Yapılandırması
+        // 2. Bağımlılık Enjeksiyonu (DI) Yapılandırması
         var services = new ServiceCollection();
         ConfigureServices(services);
         _serviceProvider = services.BuildServiceProvider();
 
-        // 4. Ana Pencere Başlatma Mantığı
+        // 3. Ana Pencere Başlatma Mantığı (Hızlı Başlangıç)
         var settingsService = _serviceProvider.GetRequiredService<SettingsService>();
         var settings = settingsService.Load();
 
@@ -106,6 +66,75 @@ public partial class App : System.Windows.Application
         }
 
         Log.Information("Uygulama başarıyla başlatıldı.");
+
+        // 4. FFmpeg Gereksinim Kontrolü (Arka Planda Asenkron)
+        // UI'ı bloklamadan arka planda kontrol edilir
+        _ = Task.Run(async () => await CheckAndInstallFfmpegAsync());
+    }
+
+    /// <summary>
+    /// FFmpeg kurulu olup olmadığını kontrol eder ve gerekirse kullanıcıya indirme seçeneği sunar.
+    /// Bu metod arka planda çalışır ve UI'ı bloklamaz.
+    /// </summary>
+    private async Task CheckAndInstallFfmpegAsync()
+    {
+        try
+        {
+            if (!FfmpegHelper.IsInstalled())
+            {
+                Log.Warning("FFmpeg bulunamadı, kullanıcıya indirme seçeneği sunuluyor.");
+
+                await Dispatcher.InvokeAsync(async () =>
+                {
+                    var result = MessageBox.Show(
+                        "FFmpeg bulunamadı. Video kaydı için FFmpeg gereklidir.\n\n" +
+                        "Şimdi otomatik olarak indirilsin mi? (yaklaşık 100MB)",
+                        "FFmpeg Gerekli",
+                        MessageBoxButton.YesNo,
+                        MessageBoxImage.Question
+                    );
+
+                    if (result == MessageBoxResult.Yes)
+                    {
+                        var downloadWindow = new DownloadProgressWindow();
+                        downloadWindow.Show();
+
+                        var progress = new Progress<string>(msg =>
+                        {
+                            Log.Information($"FFmpeg: {msg}");
+                            downloadWindow.UpdateProgress(msg);
+                        });
+
+                        var success = await FfmpegHelper.DownloadAndInstallAsync(progress);
+
+                        downloadWindow.Close();
+
+                        if (!success)
+                        {
+                            MessageBox.Show(
+                                "FFmpeg indirilemedi. Lütfen manuel olarak kurun:\n" +
+                                "https://ffmpeg.org/download.html",
+                                "Hata",
+                                MessageBoxButton.OK,
+                                MessageBoxImage.Error
+                            );
+                        }
+                        else
+                        {
+                            Log.Information("FFmpeg başarıyla indirildi ve kuruldu.");
+                        }
+                    }
+                });
+            }
+            else
+            {
+                Log.Information("FFmpeg zaten kurulu.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "FFmpeg kontrolü sırasında hata oluştu.");
+        }
     }
 
     /// <summary>
