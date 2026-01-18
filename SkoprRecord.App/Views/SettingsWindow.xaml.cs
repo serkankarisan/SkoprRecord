@@ -1,10 +1,7 @@
-﻿using System.IO;
-using System.Windows;
-using Microsoft.Win32;
-using Microsoft.Extensions.Logging;
-using SkoprRecord.Application.Services;
-using SkoprRecord.Domain.Enums;
+﻿using Microsoft.Win32;
 using SkoprRecord.Domain.Models;
+using System.IO;
+using System.Windows;
 
 namespace SkoprRecord.App.Views;
 
