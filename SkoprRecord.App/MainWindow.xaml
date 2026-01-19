@@ -6,7 +6,7 @@
         xmlns:vm="clr-namespace:SkoprRecord.App.ViewModels"
         d:DataContext="{d:DesignInstance Type=vm:MainWindowViewModel}"
         mc:Ignorable="d"
-        Title="Skopr Record" Height="380" Width="480"
+        Title="Skopr Kaydet" Height="380" Width="480"
         Icon="Assets/app_icon.png"
         WindowStyle="None" ResizeMode="CanMinimize" AllowsTransparency="True" Background="Transparent">
 
@@ -23,7 +23,7 @@
 
             <!-- Title Bar -->
             <Grid Grid.Row="0">
-                <TextBlock Text="SKOPR RECORD" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="20,0,0,0" 
+                <TextBlock Text="SKOPR KAYDET" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="20,0,0,0" 
                            Foreground="{StaticResource TextSecondaryBrush}" FontWeight="Bold" FontSize="12"/>
                 
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
