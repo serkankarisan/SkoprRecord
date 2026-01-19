@@ -5,7 +5,7 @@
         Title="Ayarlar" Height="480" Width="500"
         WindowStyle="None" ResizeMode="NoResize"
         AllowsTransparency="True" Background="Transparent"
-        WindowStartupLocation="CenterOwner">
+        WindowStartupLocation="CenterScreen">
 
     <shell:WindowChrome.WindowChrome>
         <shell:WindowChrome CaptionHeight="40"
@@ -14,7 +14,7 @@
                             CornerRadius="0" />
     </shell:WindowChrome.WindowChrome>
 
-    <Border Background="#1E1E1E" CornerRadius="12" BorderBrush="#333" BorderThickness="1" Margin="0,0,0,-119">
+    <Border Background="#1E1E1E" CornerRadius="12" BorderBrush="#333" BorderThickness="1">
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="40"/>
@@ -138,11 +138,16 @@
                                     </Trigger>
 
                                     <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter TargetName="MainBorder" Property="BorderBrush" Value="#555"/>
+                                        <Setter TargetName="MainBorder" Property="BorderBrush" Value="#4A9EFF"/>
+                                        <Setter TargetName="MainBorder" Property="Background" Value="#353535"/>
+                                    </Trigger>
+
+                                    <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                                        <Setter TargetName="MainBorder" Property="BorderBrush" Value="#4A9EFF"/>
                                     </Trigger>
 
                                     <Trigger Property="IsDropDownOpen" Value="True">
-                                        <Setter TargetName="MainBorder" Property="BorderBrush" Value="#666"/>
+                                        <Setter TargetName="MainBorder" Property="BorderBrush" Value="#4A9EFF"/>
                                     </Trigger>
                                 </ControlTemplate.Triggers>
                             </ControlTemplate>
@@ -168,8 +173,8 @@
                                 </Border>
                                 <ControlTemplate.Triggers>
                                     <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter TargetName="Bd" Property="Background" Value="#4A9EFF"/>
-                                        <Setter Property="Foreground" Value="#FFF"/>
+                                        <Setter TargetName="Bd" Property="Background" Value="#3D3D3D"/>
+                                        <Setter Property="Foreground" Value="#4A9EFF"/>
                                     </Trigger>
                                     <Trigger Property="IsSelected" Value="True">
                                         <Setter TargetName="Bd" Property="Background" Value="#3D3D3D"/>
@@ -180,6 +185,13 @@
                         </Setter.Value>
                     </Setter>
                 </Style>
+
+                <!-- Suppress system highlights that cause bright blue interference -->
+                <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="Transparent"/>
+                <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="#4A9EFF"/>
+                <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}" Color="Transparent"/>
+                <SolidColorBrush x:Key="{x:Static SystemColors.ControlBrushKey}" Color="#2D2D2D"/>
+                <SolidColorBrush x:Key="{x:Static SystemColors.WindowBrushKey}" Color="#1E1E1E"/>
             </Grid.Resources>
 
             <!-- Title Bar -->
@@ -203,7 +215,7 @@
             </Grid>
 
             <!-- Settings Content -->
-            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="20,10">
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="20,10,20,0">
                 <StackPanel>
 
                     <!-- Video Ayarları -->
@@ -321,9 +333,20 @@
                 <Button Content="Kaydet"
                         Width="80" Height="35"
                         Click="SaveButton_Click"
-                        Background="#4A9EFF"
-                        Foreground="#FFF"
-                        BorderThickness="0"/>
+                        Background="#3D4C63"
+                        Foreground="#EEE"
+                        BorderThickness="0">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Opacity" Value="0.9"/>
+                                    <Setter Property="Background" Value="#4A5C7A"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
             </StackPanel>
         </Grid>
     </Border>

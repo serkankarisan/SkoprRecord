@@ -8,7 +8,7 @@
         mc:Ignorable="d"
         Title="Skopr Kaydet" Height="380" Width="480"
         Icon="Assets/app_icon.png"
-        WindowStyle="None" ResizeMode="CanMinimize" AllowsTransparency="True" Background="Transparent">
+        WindowStyle="None" ResizeMode="CanMinimize" AllowsTransparency="True" Background="Transparent" WindowStartupLocation="CenterScreen">
 
     <WindowChrome.WindowChrome>
         <WindowChrome CaptionHeight="40" ResizeBorderThickness="0" GlassFrameThickness="0" CornerRadius="0"/>
@@ -98,10 +98,14 @@
                                 <Setter TargetName="MainBorder" Property="Opacity" Value="0.55"/>
                             </Trigger>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="MainBorder" Property="BorderBrush" Value="#555"/>
+                                <Setter TargetName="MainBorder" Property="BorderBrush" Value="#4A9EFF"/>
+                                <Setter TargetName="MainBorder" Property="Background" Value="#353535"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                                <Setter TargetName="MainBorder" Property="BorderBrush" Value="#4A9EFF"/>
                             </Trigger>
                             <Trigger Property="IsDropDownOpen" Value="True">
-                                <Setter TargetName="MainBorder" Property="BorderBrush" Value="#666"/>
+                                <Setter TargetName="MainBorder" Property="BorderBrush" Value="#4A9EFF"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -125,8 +129,8 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="#4A9EFF"/>
-                                <Setter Property="Foreground" Value="#FFF"/>
+                                <Setter TargetName="Bd" Property="Background" Value="#3D3D3D"/>
+                                <Setter Property="Foreground" Value="#4A9EFF"/>
                             </Trigger>
                             <Trigger Property="IsSelected" Value="True">
                                 <Setter TargetName="Bd" Property="Background" Value="#3D3D3D"/>
@@ -138,6 +142,12 @@
             </Setter>
         </Style>
 
+        <!-- Suppress system highlights that cause bright blue interference -->
+        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="Transparent"/>
+        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="#4A9EFF"/>
+        <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}" Color="Transparent"/>
+        <SolidColorBrush x:Key="{x:Static SystemColors.ControlBrushKey}" Color="#2D2D2D"/>
+        <SolidColorBrush x:Key="{x:Static SystemColors.WindowBrushKey}" Color="#1E1E1E"/>
     </Window.Resources>
 
     <Border Background="{StaticResource BgDarkBrush}" CornerRadius="16" BorderBrush="#333" BorderThickness="1">

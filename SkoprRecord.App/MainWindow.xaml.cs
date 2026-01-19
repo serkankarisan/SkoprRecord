@@ -28,6 +28,7 @@ public partial class MainWindow : Window
     public MainWindow(MainWindowViewModel viewModel, SettingsService settingsService)
     {
         InitializeComponent();
+        WindowStartupLocation = WindowStartupLocation.CenterScreen;
         _viewModel = viewModel;
         _settingsService = settingsService;
         DataContext = viewModel;
@@ -340,7 +341,8 @@ public partial class MainWindow : Window
     {
         var settingsClone = _settings.Clone();
         var settingsWindow = new SettingsWindow(settingsClone);
-        settingsWindow.Owner = this;
+        // Explicitly center and show independently to avoid anchoring to MainWindow's offset
+        settingsWindow.WindowStartupLocation = WindowStartupLocation.CenterScreen;
 
         if (settingsWindow.ShowDialog() == true)
         {
