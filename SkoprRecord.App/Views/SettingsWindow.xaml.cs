@@ -23,6 +23,7 @@ public partial class SettingsWindow : Window
     public SettingsWindow(RecordingSettings currentSettings)
     {
         InitializeComponent();
+        WindowStartupLocation = WindowStartupLocation.CenterScreen;
         Settings = currentSettings;
         LoadSettings();
     }

@@ -6,29 +6,165 @@
         xmlns:vm="clr-namespace:SkoprRecord.App.ViewModels"
         d:DataContext="{d:DesignInstance Type=vm:MainWindowViewModel}"
         mc:Ignorable="d"
-        Title="Skopr Record" Height="380" Width="480"
+        Title="Skopr Kaydet" Height="380" Width="480"
         Icon="Assets/app_icon.png"
-        WindowStyle="None" ResizeMode="CanMinimize" AllowsTransparency="True" Background="Transparent">
+        WindowStyle="None" ResizeMode="CanMinimize" AllowsTransparency="True" Background="Transparent" WindowStartupLocation="CenterScreen">
 
     <WindowChrome.WindowChrome>
         <WindowChrome CaptionHeight="40" ResizeBorderThickness="0" GlassFrameThickness="0" CornerRadius="0"/>
     </WindowChrome.WindowChrome>
 
+    <!-- Sadece BU sayfada: key'li stiller (default'u bozmaz) -->
+    <Window.Resources>
+
+        <Style x:Key="DarkComboBoxStyle" TargetType="{x:Type ComboBox}">
+            <Setter Property="Foreground" Value="#EEE"/>
+            <Setter Property="Background" Value="#2D2D2D"/>
+            <Setter Property="BorderBrush" Value="#444"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="8,5"/>
+            <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
+            <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ComboBox}">
+                        <Grid>
+                            <Border x:Name="MainBorder"
+                                    CornerRadius="4"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    SnapsToDevicePixels="True">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="28"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <ToggleButton x:Name="ToggleButton"
+                                                  Grid.ColumnSpan="2"
+                                                  Focusable="False"
+                                                  Background="Transparent"
+                                                  BorderThickness="0"
+                                                  IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                                  ClickMode="Press"/>
+
+                                    <ContentPresenter x:Name="ContentSite"
+                                                      Grid.Column="0"
+                                                      Margin="{TemplateBinding Padding}"
+                                                      VerticalAlignment="Center"
+                                                      HorizontalAlignment="Left"
+                                                      IsHitTestVisible="False"
+                                                      Content="{TemplateBinding SelectionBoxItem}"
+                                                      ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                                      ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"
+                                                      RecognizesAccessKey="True"/>
+
+                                    <Path Grid.Column="1"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"
+                                          Data="M 0 0 L 4 4 L 8 0 Z"
+                                          Fill="#888"
+                                          IsHitTestVisible="False"/>
+                                </Grid>
+                            </Border>
+
+                            <Popup x:Name="PART_Popup"
+                                   Placement="Bottom"
+                                   IsOpen="{TemplateBinding IsDropDownOpen}"
+                                   AllowsTransparency="True"
+                                   Focusable="False"
+                                   PopupAnimation="Slide">
+                                <Grid MinWidth="{TemplateBinding ActualWidth}"
+                                      MaxHeight="{TemplateBinding MaxDropDownHeight}"
+                                      SnapsToDevicePixels="True">
+                                    <Border x:Name="DropDownBorder"
+                                            Background="{TemplateBinding Background}"
+                                            BorderBrush="{TemplateBinding BorderBrush}"
+                                            BorderThickness="1"
+                                            CornerRadius="4"/>
+
+                                    <ScrollViewer Margin="4,6,4,6"
+                                                  SnapsToDevicePixels="True"
+                                                  VerticalScrollBarVisibility="{TemplateBinding ScrollViewer.VerticalScrollBarVisibility}">
+                                        <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained"/>
+                                    </ScrollViewer>
+                                </Grid>
+                            </Popup>
+                        </Grid>
+
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="MainBorder" Property="Opacity" Value="0.55"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="MainBorder" Property="BorderBrush" Value="#4A9EFF"/>
+                                <Setter TargetName="MainBorder" Property="Background" Value="#353535"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                                <Setter TargetName="MainBorder" Property="BorderBrush" Value="#4A9EFF"/>
+                            </Trigger>
+                            <Trigger Property="IsDropDownOpen" Value="True">
+                                <Setter TargetName="MainBorder" Property="BorderBrush" Value="#4A9EFF"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="DarkComboBoxItemStyle" TargetType="{x:Type ComboBoxItem}">
+            <Setter Property="Foreground" Value="#EEE"/>
+            <Setter Property="Background" Value="#2D2D2D"/>
+            <Setter Property="Padding" Value="8,5"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ComboBoxItem}">
+                        <Border x:Name="Bd"
+                                CornerRadius="3"
+                                Background="{TemplateBinding Background}"
+                                Padding="{TemplateBinding Padding}"
+                                SnapsToDevicePixels="True">
+                            <ContentPresenter/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#3D3D3D"/>
+                                <Setter Property="Foreground" Value="#4A9EFF"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#3D3D3D"/>
+                                <Setter Property="Foreground" Value="#4A9EFF"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Suppress system highlights that cause bright blue interference -->
+        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="Transparent"/>
+        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="#4A9EFF"/>
+        <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}" Color="Transparent"/>
+        <SolidColorBrush x:Key="{x:Static SystemColors.ControlBrushKey}" Color="#2D2D2D"/>
+        <SolidColorBrush x:Key="{x:Static SystemColors.WindowBrushKey}" Color="#1E1E1E"/>
+    </Window.Resources>
+
     <Border Background="{StaticResource BgDarkBrush}" CornerRadius="16" BorderBrush="#333" BorderThickness="1">
         <Grid>
             <Grid.RowDefinitions>
-                <RowDefinition Height="40"/> <!-- TitleBar -->
-                <RowDefinition Height="*"/>  <!-- Content -->
+                <RowDefinition Height="40"/>
+                <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
             <!-- Title Bar -->
             <Grid Grid.Row="0">
-                <TextBlock Text="SKOPR RECORD" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="20,0,0,0" 
+                <TextBlock Text="SKOPR KAYDET" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="20,0,0,0"
                            Foreground="{StaticResource TextSecondaryBrush}" FontWeight="Bold" FontSize="12"/>
-                
+
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                     <!-- Settings Button -->
-                    <Button Content="⚙" Width="40" Height="40" 
+                    <Button Content="⚙" Width="40" Height="40"
                             Background="Transparent" Foreground="{StaticResource TextPrimaryBrush}" BorderThickness="0"
                             Click="SettingsButton_Click" WindowChrome.IsHitTestVisibleInChrome="True"
                             ToolTip="Ayarlar">
@@ -51,9 +187,9 @@
                             </Style>
                         </Button.Style>
                     </Button>
-                    
+
                     <!-- Minimize Button -->
-                    <Button Content="─" Width="40" Height="40" 
+                    <Button Content="─" Width="40" Height="40"
                             Background="Transparent" Foreground="{StaticResource TextPrimaryBrush}" BorderThickness="0"
                             Click="MinimizeButton_Click" WindowChrome.IsHitTestVisibleInChrome="True">
                         <Button.Style>
@@ -75,36 +211,36 @@
                             </Style>
                         </Button.Style>
                     </Button>
-                    
+
                     <!-- Close Button -->
-                    <Button Content="✕" Width="40" Height="40" 
+                    <Button Content="✕" Width="40" Height="40"
                             Background="Transparent" Foreground="{StaticResource TextPrimaryBrush}" BorderThickness="0"
                             Click="CloseButton_Click" WindowChrome.IsHitTestVisibleInChrome="True">
-                       <Button.Style>
-                           <Style TargetType="Button">
-                               <Setter Property="Template">
-                                   <Setter.Value>
-                                       <ControlTemplate TargetType="Button">
-                                           <Border Background="{TemplateBinding Background}">
-                                               <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                           </Border>
-                                       </ControlTemplate>
-                                   </Setter.Value>
-                               </Setter>
-                               <Style.Triggers>
-                                   <Trigger Property="IsMouseOver" Value="True">
-                                       <Setter Property="Background" Value="#CC4444"/>
-                                   </Trigger>
-                               </Style.Triggers>
-                           </Style>
-                       </Button.Style>
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border Background="{TemplateBinding Background}">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#CC4444"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
                     </Button>
                 </StackPanel>
             </Grid>
 
             <!-- Main Content -->
             <StackPanel Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="0,-10,0,0">
-                
+
                 <!-- Status Indicator -->
                 <Border Background="{StaticResource BgLightBrush}" CornerRadius="20" Padding="15,5" HorizontalAlignment="Center" Margin="0,0,0,20">
                     <StackPanel Orientation="Horizontal">
@@ -114,7 +250,7 @@
                 </Border>
 
                 <!-- Time Display -->
-                <TextBlock Text="{Binding ElapsedTime}" FontSize="42" Foreground="{StaticResource TextPrimaryBrush}" 
+                <TextBlock Text="{Binding ElapsedTime}" FontSize="42" Foreground="{StaticResource TextPrimaryBrush}"
                            FontFamily="Consolas, Monospace" HorizontalAlignment="Center" Margin="0,0,0,25"
                            Opacity="0.9">
                     <TextBlock.Effect>
@@ -131,9 +267,17 @@
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
+
                             <TextBlock Text="🖥️ Monitör:" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,10,0"/>
-                            <ComboBox Grid.Column="1" ItemsSource="{Binding AvailableMonitors}" SelectedItem="{Binding SelectedMonitor}"
-                                      IsEnabled="{Binding CanSelectMonitor}" Height="30" >
+
+                            <!-- ✅ Sadece bu ComboBox koyu -->
+                            <ComboBox Grid.Column="1"
+                                      ItemsSource="{Binding AvailableMonitors}"
+                                      SelectedItem="{Binding SelectedMonitor}"
+                                      IsEnabled="{Binding CanSelectMonitor}"
+                                      Height="30"
+                                      Style="{StaticResource DarkComboBoxStyle}"
+                                      ItemContainerStyle="{StaticResource DarkComboBoxItemStyle}">
                                 <ComboBox.ItemTemplate>
                                     <DataTemplate>
                                         <TextBlock Text="{Binding DeviceName}" />
@@ -141,7 +285,6 @@
                                 </ComboBox.ItemTemplate>
                             </ComboBox>
                         </Grid>
-
                     </StackPanel>
                 </Border>
 
@@ -173,4 +316,3 @@
         </Grid>
     </Border>
 </Window>
-
