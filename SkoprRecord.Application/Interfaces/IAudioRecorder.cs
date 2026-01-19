@@ -1,5 +1,4 @@
-﻿using System.Threading.Tasks;
-using SkoprRecord.Domain.Models;
+﻿using SkoprRecord.Domain.Models;
 
 namespace SkoprRecord.Application.Interfaces;
 

@@ -1,6 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
-using SkoprRecord.Domain.Enums;
+﻿using SkoprRecord.Domain.Enums;
 using SkoprRecord.Domain.Models;
 
 namespace SkoprRecord.Application.Interfaces;
@@ -28,7 +26,8 @@ public interface IRecorderController
     /// <summary>
     /// Kaydı durdurur ve dosyaları birleştirme işlemini başlatır.
     /// </summary>
-    Task StopRecordingAsync();
+    /// <param name="suppressEvent">Eğer true ise RecordingEnded eventi tetiklenmez (sadece dönüş değeri verilir).</param>
+    Task<string?> StopRecordingAsync(bool suppressEvent = false);
 
     /// <summary> Kayıt başarıyla başladığında tetiklenir. </summary>
     event EventHandler? RecordingStarted;

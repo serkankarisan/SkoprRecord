@@ -1,12 +1,9 @@
-﻿using System;
-using System.Diagnostics;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
+﻿using SkoprRecord.Application.Helpers;
 using SkoprRecord.Application.Interfaces;
 using SkoprRecord.Domain.Enums;
 using SkoprRecord.Domain.Interfaces;
 using SkoprRecord.Domain.Models;
-using SkoprRecord.Application.Helpers;
+using System.Diagnostics;
 
 namespace SkoprRecord.Application.Services;
 
@@ -119,7 +116,7 @@ public class RecorderController : IRecorderController
 
             var timestamp = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
 
-            // Extension is .mp3 for audio only, .mp4 for video
+            // Sadece ses için .mp3, video için .mp4 uzantısı kullan
             var ext = Settings.IsAudioOnly ? ".mp3" : ".mp4";
             _currentOutputPath = System.IO.Path.Combine(outputFolder, $"Kayit_{timestamp}{ext}");
 
@@ -160,7 +157,7 @@ public class RecorderController : IRecorderController
 
                 // Görüntü yakalamayı başlat (Seçili monitör ile)
                 var targetMonitor = Settings.SelectedMonitorHandle;
-                
+
                 await _captureSource.StartCaptureAsync(targetMonitor);
 
                 CurrentState = RecorderState.Recording;
@@ -180,13 +177,16 @@ public class RecorderController : IRecorderController
     /// <summary>
     /// Kayıt işlemini durdurur, kaynakları serbest bırakır ve dosya birleştirmelerini yapar.
     /// </summary>
-    public async Task StopRecordingAsync()
+    public async Task<string?> StopRecordingAsync(bool suppressEvent = false)
     {
-        if (CurrentState != RecorderState.Recording) return;
+        if (CurrentState != RecorderState.Recording) return null;
 
         try
         {
             CurrentState = RecorderState.Stopping;
+
+            // Durdurma işlemi mantığı
+            // Kaynakları durdur ve bekle
 
             // Ses kaydını durdur ve geçici dosyaları al
             var audioResult = _audioRecorder.StopRecording();
@@ -201,7 +201,7 @@ public class RecorderController : IRecorderController
                 // Basitlik için mixleyip MP3 yapalım.
                 if (_currentOutputPath != null && audioFiles.Count > 0)
                 {
-                     await ConvertToMp3Async(audioFiles, _currentOutputPath);
+                    await ConvertToMp3Async(audioFiles, _currentOutputPath);
                 }
             }
             else
@@ -216,12 +216,18 @@ public class RecorderController : IRecorderController
 
             if (_currentOutputPath != null && System.IO.File.Exists(_currentOutputPath))
             {
-                RecordingEnded?.Invoke(this, _currentOutputPath);
+                if (!suppressEvent)
+                {
+                    RecordingEnded?.Invoke(this, _currentOutputPath);
+                }
+                return _currentOutputPath; // Dosya yolunu dön
             }
+            return null;
         }
         catch (Exception ex)
         {
             Debug.WriteLine($"Kayıt durdurma hatası: {ex.Message}");
+            return null;
         }
         finally
         {
@@ -260,9 +266,9 @@ public class RecorderController : IRecorderController
         }
 
         // Geçici wavları temizle
-        foreach(var f in inputs)
+        foreach (var f in inputs)
         {
-             try { System.IO.File.Delete(f); } catch {}
+            try { System.IO.File.Delete(f); } catch { }
         }
     }
 

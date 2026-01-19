@@ -2,20 +2,33 @@ using System.Runtime.InteropServices;
 
 namespace SkoprRecord.Application.Helpers;
 
+/// <summary>
+/// Monitör bilgilerini tutan DTO sınıfı.
+/// </summary>
 public class DisplayInfo
 {
+    /// <summary> Cihaz adı (örn: \\.\DISPLAY1). </summary>
     public string DeviceName { get; set; } = string.Empty;
+    /// <summary> Monitör handle değeri. </summary>
     public IntPtr Handle { get; set; }
+    /// <summary> Ana ekran olup olmadığı. </summary>
     public bool IsPrimary { get; set; }
+    /// <summary> Genişlik (piksel). </summary>
     public int Width { get; set; }
+    /// <summary> Yükseklik (piksel). </summary>
     public int Height { get; set; }
 
+    /// <summary> Bilgileri string olarak döner. </summary>
     public override string ToString()
     {
         return $"{DeviceName} {(IsPrimary ? "[Ana Ekran]" : "")} ({Width}x{Height})";
     }
 }
 
+/// <summary>
+/// Sistemdeki monitörleri listelemek ve imlecin hangi monitörde olduğunu bulmak için yardımcı sınıf.
+/// Win32 API çağrılarını kullanır.
+/// </summary>
 public static class MonitorEnumerationHelper
 {
     private delegate bool MonitorEnumDelegate(IntPtr hMonitor, IntPtr hdcMonitor, ref Rect lprcMonitor, IntPtr dwData);
@@ -62,6 +75,9 @@ public static class MonitorEnumerationHelper
         public int Y;
     }
 
+    /// <summary>
+    /// Fare imlecinin bulunduğu monitörün handle değerini döner.
+    /// </summary>
     public static IntPtr GetMonitorForCursor()
     {
         if (GetCursorPos(out var point))
@@ -71,6 +87,9 @@ public static class MonitorEnumerationHelper
         return IntPtr.Zero;
     }
 
+    /// <summary>
+    /// Sistemdeki tüm aktif monitörlerin listesini döner.
+    /// </summary>
     public static List<DisplayInfo> GetMonitors()
     {
         var monitors = new List<DisplayInfo>();

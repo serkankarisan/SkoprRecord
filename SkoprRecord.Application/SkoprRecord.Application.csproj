@@ -14,6 +14,13 @@
     <Nullable>enable</Nullable>
     <DebugType>none</DebugType>
     <DebugSymbols>false</DebugSymbols>
+    
+    <!-- Proje Metadata -->
+    <Product>Skopr Record - Application Layer</Product>
+    <Description>Skopr Record uygulama katmanı - İş mantığı ve servisler</Description>
+    <Authors>Serkan Karışan</Authors>
+    <Company>Serkan Karışan</Company>
+    <Copyright>Copyright © 2026 Serkan Karışan. Tüm hakları saklıdır.</Copyright>
   </PropertyGroup>
 
 </Project>
