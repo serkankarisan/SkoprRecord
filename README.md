@@ -1,4 +1,4 @@
-# Skopr Ekran Kaydet (Skopr Screen Record) 🎥
+# Skopr Ekran Kaydet (Skopr Screen Record) 🎥 (WPF & WinForms)
 
 **Skopr Screen Record**, Windows için geliştirilmiş, yüksek performanslı ve modern arayüzlü bir ekran kayıt uygulamasıdır. Windows Graphics Capture API (WGC) ve FFmpeg teknolojilerini kullanarak düşük gecikmeli, yüksek kaliteli video ve ses kaydı sunar.
 
@@ -16,7 +16,7 @@
 ## 🛠️ Kullanılan Teknolojiler
 
 - **Dil**: C# 12 / .NET 8
-- **Arayüz**: WPF (Windows Presentation Foundation)
+- **Arayüz**: WPF ve Windows Forms (WinForms)
 - **Ekran Yakalama**: Windows Graphics Capture (WGC)
 - **Video Kodlama**: FFmpeg (libx264)
 - **Ses İşleme**: NAudio (WASAPI Loopback & WaveIn)
@@ -28,7 +28,8 @@
 
 Proje Clean Architecture prensiplerine uygun olarak katmanlara ayrılmıştır:
 
-- **SkoprRecord.App**: WPF kullanıcı arayüzü, ViewModels ve Windows servisleri.
+- **SkoprRecord.App**: WPF kullanıcı arayüzü, ViewModels.
+- **SkoprRecord.WinForms**: Windows Forms kullanıcı arayüzü ve entegrasyonu.
 - **SkoprRecord.Application**: İş mantığı (Business Logic), servis arayüzleri ve kontrolörler.
 - **SkoprRecord.Domain**: Temel modeller, enumlar ve en alt düzey arayüzler.
 - **SkoprRecord.Infrastructure**: WGC yakalama, FFmpeg kodlama ve NAudio ses kayıt uygulamaları.
@@ -51,6 +52,8 @@ Proje Clean Architecture prensiplerine uygun olarak katmanlara ayrılmıştır:
 3. Uygulamayı derleyin ve çalıştırın:
    ```bash
    dotnet run --project SkoprRecord.App
+   # Veya WinForms versiyonu için:
+   dotnet run --project SkoprRecord.WinForms
    ```
 
 > [!NOTE]

@@ -30,22 +30,28 @@
     <Authors>Serkan Karışan</Authors>
     <Company>Serkan Karışan</Company>
     <Copyright>Copyright © 2026 Serkan Karışan. Tüm hakları saklıdır.</Copyright>
-    <AssemblyVersion>1.0.0.0</AssemblyVersion>
-    <FileVersion>1.0.0.0</FileVersion>
-    <InformationalVersion>1.0.0-stable</InformationalVersion>
+    <AssemblyVersion>1.1.0.0</AssemblyVersion>
+    <FileVersion>1.1.0.0</FileVersion>
+    <InformationalVersion>1.1.0-stable</InformationalVersion>
     <NeutralLanguage>tr-TR</NeutralLanguage>
     
-    <!-- Yayınlama Optimizasyonları -->
+    <!-- Yayınlama ve Boyut Optimizasyonları -->
     <PublishSingleFile>true</PublishSingleFile>
-    <SelfContained>false</SelfContained>
+    <SelfContained>true</SelfContained>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <DebugType>none</DebugType>
     <DebugSymbols>false</DebugSymbols>
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
     
-    <!-- Yayınlama Optimizasyonları (WPF Trimming desteklemediği için kapatıldı) -->
+    <!-- Trimming WPF'de desteklenmiyor, kapalı tutulmalı -->
     <PublishTrimmed>false</PublishTrimmed>
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    
+    <!-- Sadece Türkçe ve İngilizce locale'leri dahil et -->
+    <SatelliteResourceLanguages>tr;en</SatelliteResourceLanguages>
+    
+    <!-- ReadyToRun kapalı (boyut optimizasyonu) -->
+    <PublishReadyToRun>false</PublishReadyToRun>
   </PropertyGroup>
 
   <ItemGroup>
