@@ -53,9 +53,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="Assets\app_icon.ico">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
+    <EmbeddedResource Include="Assets\app_icon.ico" />
   </ItemGroup>
 
 </Project>

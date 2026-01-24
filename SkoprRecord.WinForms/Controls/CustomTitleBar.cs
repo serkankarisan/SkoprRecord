@@ -193,10 +193,17 @@ public partial class CustomTitleBar : UserControl
     {
         try
         {
-            var iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "app_icon.ico");
-            if (File.Exists(iconPath))
+            var assembly = System.Reflection.Assembly.GetExecutingAssembly();
+            // Resource adı: Varsayılan Namespace + Klasör Yolu + Dosya Adı
+            // Örn: SkoprRecord.WinForms.Assets.app_icon.ico
+            var resourceName = "SkoprRecord.WinForms.Assets.app_icon.ico";
+
+            using (var stream = assembly.GetManifestResourceStream(resourceName))
             {
-                _picIcon.Image = new Icon(iconPath).ToBitmap();
+                if (stream != null)
+                {
+                    _picIcon.Image = new Icon(stream).ToBitmap();
+                }
             }
         }
         catch (Exception ex)

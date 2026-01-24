@@ -17,6 +17,7 @@ public partial class MainForm : Form
     private readonly SettingsService _settingsService;
     private RecordingSettings _settings;
     private System.Windows.Forms.Timer _timer = null!;
+    private static Icon? _appIcon; // Statik tutarak handle'ın ve stream'in ölmesini engelliyoruz
     private TimeSpan _elapsedTime;
     private NotifyIcon? _trayIcon;
     private GlobalHotkeyService? _hotkeyService;
@@ -150,12 +151,29 @@ public partial class MainForm : Form
     /// </remarks>
     private void LoadAppIcon()
     {
+        if (_appIcon != null)
+        {
+            this.Icon = _appIcon;
+            return;
+        }
+
         try
         {
-            var iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "app_icon.ico");
-            if (File.Exists(iconPath))
+            var assembly = System.Reflection.Assembly.GetExecutingAssembly();
+            // Not: Ad alanı ProjeAdı.KlasörAdı.DosyaAdı şeklindedir
+            var resourceName = "SkoprRecord.WinForms.Assets.app_icon.ico";
+            using (var stream = assembly.GetManifestResourceStream(resourceName))
             {
-                this.Icon = new Icon(iconPath);
+                if (stream != null)
+                {
+                    var ms = new MemoryStream();
+                    stream.CopyTo(ms);
+                    ms.Position = 0;
+                    
+                    // Çoklu çözünürlük desteği ile yükle
+                    _appIcon = new Icon(ms);
+                    this.Icon = _appIcon;
+                }
             }
         }
         catch (Exception ex)
@@ -186,9 +204,12 @@ public partial class MainForm : Form
     /// </remarks>
     private void SetupTrayIcon()
     {
+        // İkonu LoadAppIcon üzerinden veya statikten al
+        if (_appIcon == null) LoadAppIcon();
+        
         _trayIcon = new NotifyIcon
         {
-            Icon = this.Icon,
+            Icon = _appIcon ?? this.Icon,
             Text = "Skopr Kaydet",
             Visible = true
         };
