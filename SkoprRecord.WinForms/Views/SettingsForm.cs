@@ -55,6 +55,31 @@ public partial class SettingsForm : Form
         chkStartInTray.Checked = _settings.StartInTray;
         chkShowNotifications.Checked = _settings.ShowNotifications;
         chkConfirmSaveOnStop.Checked = _settings.ConfirmSaveOnStop;
+
+        // Kısayol Ayarları (Mevcut ayarları TextBox'lara yükle)
+        txtHotkeyScreen.Text = FormatHotkey(_settings.HotkeyScreenMods, _settings.HotkeyScreenKey);
+        txtHotkeyAudio.Text = FormatHotkey(_settings.HotkeyAudioMods, _settings.HotkeyAudioKey);
+        txtHotkeyStop.Text = FormatHotkey(_settings.HotkeyStopMods, _settings.HotkeyStopKey);
+    }
+
+    /// <summary>
+    /// Kısayol değiştirici ve tuş kombinasyonunu string formunda dönüştürür.
+    /// </summary>
+    private string FormatHotkey(uint modifiers, uint key)
+    {
+        string modStr = "";
+        if ((modifiers & 0x0001) != 0) modStr += "Alt+";
+        if ((modifiers & 0x0002) != 0) modStr += "Ctrl+";
+        if ((modifiers & 0x0004) != 0) modStr += "Shift+";
+
+        Keys keyCode = (Keys)key;
+        string keyStr = keyCode.ToString();
+
+        // Rakamlar
+        if (keyStr.StartsWith("D") && keyStr.Length == 2 && char.IsDigit(keyStr[1]))
+            keyStr = keyStr.Substring(1);
+
+        return modStr + keyStr;
     }
 
     /// <summary>
@@ -72,6 +97,8 @@ public partial class SettingsForm : Form
         _settings.StartInTray = chkStartInTray.Checked;
         _settings.ShowNotifications = chkShowNotifications.Checked;
         _settings.ConfirmSaveOnStop = chkConfirmSaveOnStop.Checked;
+
+        // Hotkeys are saved immediately into _settings via HotkeyTextBox_KeyDown
     }
 
     private void btnBrowse_Click(object sender, EventArgs e)
@@ -141,6 +168,58 @@ public partial class SettingsForm : Form
     {
         this.DialogResult = DialogResult.Cancel;
         this.Close();
+    }
+
+    /// <summary>
+    /// Kısayol TextBox'larına tıklandığında tuş kombinasyonunu yakalar ve ayarlar nesnesine kaydeder.
+    /// </summary>
+    private void HotkeyTextBox_KeyDown(object? sender, KeyEventArgs e)
+    {
+        if (sender is not TextBox txtBox) return;
+
+        // Engellemek istediğimiz tuşlar (Sadece Modifier basılmışsa yoksay)
+        if (e.KeyCode == Keys.ShiftKey || e.KeyCode == Keys.ControlKey || e.KeyCode == Keys.Menu)
+        {
+            e.SuppressKeyPress = true;
+            return;
+        }
+
+        uint modifiers = 0;
+        string modStr = "";
+
+        if (e.Alt) { modifiers |= 0x0001; modStr += "Alt+"; }
+        if (e.Control) { modifiers |= 0x0002; modStr += "Ctrl+"; }
+        if (e.Shift) { modifiers |= 0x0004; modStr += "Shift+"; }
+
+        uint key = (uint)e.KeyCode;
+        string keyStr = e.KeyCode.ToString();
+
+        // Rakamlar için D1, D2 vb. yerine sayısal karşılığı
+        if (keyStr.StartsWith("D") && keyStr.Length == 2 && char.IsDigit(keyStr[1]))
+        {
+            keyStr = keyStr.Substring(1);
+        }
+
+        string fullStr = modStr + keyStr;
+        txtBox.Text = fullStr;
+
+        if (txtBox == txtHotkeyScreen)
+        {
+            _settings.HotkeyScreenMods = modifiers;
+            _settings.HotkeyScreenKey = key;
+        }
+        else if (txtBox == txtHotkeyAudio)
+        {
+            _settings.HotkeyAudioMods = modifiers;
+            _settings.HotkeyAudioKey = key;
+        }
+        else if (txtBox == txtHotkeyStop)
+        {
+            _settings.HotkeyStopMods = modifiers;
+            _settings.HotkeyStopKey = key;
+        }
+
+        e.SuppressKeyPress = true; // Sisteme gitmesini engelle (Bip sesini vb önler)
     }
 
     /// <summary>

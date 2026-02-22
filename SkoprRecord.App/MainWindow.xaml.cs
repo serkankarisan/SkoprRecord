@@ -23,6 +23,7 @@ public partial class MainWindow : Window
     private TaskbarIcon? _trayIcon;
     private System.Windows.Controls.MenuItem? _startStopScreenItem;
     private System.Windows.Controls.MenuItem? _startStopAudioItem;
+    private System.Windows.Controls.MenuItem? _stopRecordingItem;
     private System.Windows.Controls.MenuItem? _systemAudioMenuItem;
     private System.Windows.Controls.MenuItem? _micMenuItem;
     private bool _isExiting = false;
@@ -193,6 +194,13 @@ public partial class MainWindow : Window
         };
         contextMenu.Items.Add(_startStopAudioItem);
 
+        _stopRecordingItem = new System.Windows.Controls.MenuItem { Header = "⏹️ Kaydı Durdur", Visibility = Visibility.Collapsed };
+        _stopRecordingItem.Click += (s, e) =>
+        {
+            if (_viewModel.StopRecordingCommand.CanExecute(null)) _viewModel.StopRecordingCommand.Execute(null);
+        };
+        contextMenu.Items.Add(_stopRecordingItem);
+
         contextMenu.Items.Add(new System.Windows.Controls.Separator());
 
         // Hızlı ses kanalı kontrolleri
@@ -267,33 +275,42 @@ public partial class MainWindow : Window
     /// </summary>
     private void UpdateTrayMenuState(bool isRecording)
     {
-        // Kayıt sırasında "Başlat" butonlarını "Durdur" a çeviriyoruz. 
-        // Ekran ve Ses butonlarını tek bir "Durdur" butonuna çevirmek veya disable etmek gerek.
-        // Basitlik için: Kayıt varsa ikisini de gizleyip "Durdur" ekleyebiliriz ama mevcut objeler üzerinden gidelim.
-
         if (isRecording)
         {
-            if (_startStopScreenItem != null) _startStopScreenItem.Visibility = Visibility.Collapsed;
-            if (_startStopAudioItem != null) _startStopAudioItem.Header = "⏹️ Kaydı Durdur";
-            if (_startStopAudioItem != null) _startStopAudioItem.Click -= OnStopClick; // Çift aboneliği önle
-            if (_startStopAudioItem != null) _startStopAudioItem.Click += OnStopClick;
-            // Audio item'ı geçici durdurma butonu olarak kullanalım.
+            if (_startStopScreenItem != null)
+            {
+                _startStopScreenItem.IsEnabled = false;
+                _startStopScreenItem.Header = "🔴 Ekran Kaydı (Kayıt Devam Ediyor)";
+            }
+            if (_startStopAudioItem != null)
+            {
+                _startStopAudioItem.IsEnabled = false;
+                _startStopAudioItem.Header = "🎵 Ses Kaydı (Kayıt Devam Ediyor)";
+            }
+            if (_stopRecordingItem != null)
+            {
+                _stopRecordingItem.Visibility = Visibility.Visible;
+            }
         }
         else
         {
-            if (_startStopScreenItem != null) { _startStopScreenItem.Visibility = Visibility.Visible; _startStopScreenItem.Header = "🔴 Ekran Kaydı Başlat"; }
-            if (_startStopAudioItem != null) { _startStopAudioItem.Visibility = Visibility.Visible; _startStopAudioItem.Header = "🎵 Ses Kaydı Başlat"; }
-            // Click eventlerini resetlemek gerekir ama lambda ile ekledik.
-            // Daha temiz bir yapı kuralım: SetupTrayIcon'u her durum değişiminde yenilemek yerine, 
-            // menü durumunu yönetmek daha doğru. Ancak şimdilik basitçe tooltip güncelleyelim.
+            if (_startStopScreenItem != null)
+            {
+                _startStopScreenItem.IsEnabled = true;
+                _startStopScreenItem.Header = "🔴 Ekran Kaydı Başlat";
+            }
+            if (_startStopAudioItem != null)
+            {
+                _startStopAudioItem.IsEnabled = true;
+                _startStopAudioItem.Header = "🎵 Ses Kaydı Başlat";
+            }
+            if (_stopRecordingItem != null)
+            {
+                _stopRecordingItem.Visibility = Visibility.Collapsed;
+            }
         }
 
         if (_trayIcon != null) _trayIcon.ToolTipText = isRecording ? "Skopr Record - Kayıt yapılıyor..." : "Skopr Record";
-    }
-
-    private void OnStopClick(object sender, RoutedEventArgs e)
-    {
-        if (_viewModel.StopRecordingCommand.CanExecute(null)) _viewModel.StopRecordingCommand.Execute(null);
     }
 
     private void OpenSettings()
@@ -327,8 +344,7 @@ public partial class MainWindow : Window
     /// </summary>
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
-        _hotkeyService = new GlobalHotkeyService(this);
-        _hotkeyService.HotkeyPressed += OnHotkeyPressed;
+        SetupGlobalHotkey();
 
         _viewModel.Controller.RecordingStarted += OnRecordingStarted;
         _viewModel.Controller.RecordingEnded += OnRecordingEnded;
@@ -412,19 +428,52 @@ public partial class MainWindow : Window
         });
     }
 
-    /// <summary> Global kısayol tuşuna basıldığında kaydı başlatır (Varsayılan: Ekran Kaydı) veya durdurur. </summary>
-    private void OnHotkeyPressed(object? sender, EventArgs e)
+    /// <summary>
+    /// Global kısayolları kaydeder/günceller.
+    /// </summary>
+    private void SetupGlobalHotkey()
+    {
+        if (_hotkeyService != null)
+        {
+            _hotkeyService.Dispose();
+        }
+
+        _hotkeyService = new GlobalHotkeyService(
+            this, 
+            _settings.HotkeyScreenMods, _settings.HotkeyScreenKey,
+            _settings.HotkeyAudioMods, _settings.HotkeyAudioKey,
+            _settings.HotkeyStopMods, _settings.HotkeyStopKey
+        );
+
+        _hotkeyService.ScreenRecordingRequested += OnScreenRecordingRequested;
+        _hotkeyService.AudioRecordingRequested += OnAudioRecordingRequested;
+        _hotkeyService.StopRecordingRequested += OnStopRecordingRequested;
+    }
+
+    private void OnScreenRecordingRequested(object? sender, EventArgs e)
     {
         Dispatcher.Invoke(() =>
         {
-            if (_viewModel.StopRecordingCommand.CanExecute(null))
-            {
-                _viewModel.StopRecordingCommand.Execute(null);
-            }
-            else if (_viewModel.StartScreenRecordingCommand.CanExecute(null))
-            {
+            if (_viewModel.Controller.CurrentState != RecorderState.Recording && _viewModel.StartScreenRecordingCommand.CanExecute(null))
                 _viewModel.StartScreenRecordingCommand.Execute(null);
-            }
+        });
+    }
+
+    private void OnAudioRecordingRequested(object? sender, EventArgs e)
+    {
+        Dispatcher.Invoke(() =>
+        {
+            if (_viewModel.Controller.CurrentState != RecorderState.Recording && _viewModel.StartAudioRecordingCommand.CanExecute(null))
+                _viewModel.StartAudioRecordingCommand.Execute(null);
+        });
+    }
+
+    private void OnStopRecordingRequested(object? sender, EventArgs e)
+    {
+        Dispatcher.Invoke(() =>
+        {
+            if (_viewModel.Controller.CurrentState == RecorderState.Recording && _viewModel.StopRecordingCommand.CanExecute(null))
+                _viewModel.StopRecordingCommand.Execute(null);
         });
     }
 
@@ -541,6 +590,7 @@ public partial class MainWindow : Window
             _viewModel.CaptureSystemAudio = _settings.CaptureSystemAudio;
             _viewModel.CaptureMicrophone = _settings.CaptureMicrophone;
             _viewModel.Controller.Settings = _settings;
+            SetupGlobalHotkey(); // Kısayol tuşlarını güncelle
         }
     }
 }

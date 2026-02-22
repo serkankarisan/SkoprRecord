@@ -73,7 +73,7 @@ public class AudioRecorder : IAudioRecorder, IDisposable
 
                 _systemCapture.RecordingStopped += (s, e) =>
                 {
-                    _systemWriter?.Dispose();
+                    try { _systemWriter?.Flush(); _systemWriter?.Dispose(); } catch { }
                     _systemWriter = null;
                 };
 
@@ -111,7 +111,7 @@ public class AudioRecorder : IAudioRecorder, IDisposable
 
                 _micCapture.RecordingStopped += (s, e) =>
                 {
-                    _micWriter?.Dispose();
+                    try { _micWriter?.Flush(); _micWriter?.Dispose(); } catch { }
                     _micWriter = null;
                 };
 
@@ -151,15 +151,15 @@ public class AudioRecorder : IAudioRecorder, IDisposable
         // Yazıcıları güvenle kapat
         if (_systemWriter != null)
         {
-            _systemWriter.Flush();
-            _systemWriter.Dispose();
+            try { _systemWriter.Flush(); } catch { }
+            try { _systemWriter.Dispose(); } catch { }
             _systemWriter = null;
         }
 
         if (_micWriter != null)
         {
-            _micWriter.Flush();
-            _micWriter.Dispose();
+            try { _micWriter.Flush(); } catch { }
+            try { _micWriter.Dispose(); } catch { }
             _micWriter = null;
         }
 

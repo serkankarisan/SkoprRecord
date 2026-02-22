@@ -150,7 +150,12 @@ public class FfmpegVideoEncoder : IVideoEncoder
         {
             try
             {
-                await _ffmpegProcess.WaitForExitAsync();
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10)); // 10 sn timeout
+                await _ffmpegProcess.WaitForExitAsync(cts.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                try { _ffmpegProcess.Kill(); } catch { }
             }
             catch { }
 
@@ -267,7 +272,20 @@ public class FfmpegVideoEncoder : IVideoEncoder
 
     public void Dispose()
     {
-        FinalizeAsync().GetAwaiter().GetResult();
+        _isRecording = false;
+
+        if (_stdin != null)
+        {
+            try { _stdin.Close(); } catch { }
+            _stdin = null;
+        }
+
+        if (_ffmpegProcess != null && !_ffmpegProcess.HasExited)
+        {
+            try { _ffmpegProcess.Kill(); } catch { }
+            _ffmpegProcess.Dispose();
+            _ffmpegProcess = null;
+        }
     }
 }
 

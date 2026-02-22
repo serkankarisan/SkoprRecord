@@ -2,6 +2,7 @@
 using SkoprRecord.Domain.Models;
 using System.IO;
 using System.Windows;
+using System.Windows.Controls;
 
 namespace SkoprRecord.App.Views;
 
@@ -62,6 +63,29 @@ public partial class SettingsWindow : Window
         ConfirmSaveCheck.IsChecked = Settings.ConfirmSaveOnStop;
         ShowNotificationsCheck.IsChecked = Settings.ShowNotifications;
         StartInTrayCheck.IsChecked = Settings.StartInTray;
+
+        // Kısayollar
+        ScreenHotkeyTextBox.Text = FormatHotkey(Settings.HotkeyScreenMods, Settings.HotkeyScreenKey);
+        AudioHotkeyTextBox.Text = FormatHotkey(Settings.HotkeyAudioMods, Settings.HotkeyAudioKey);
+        StopHotkeyTextBox.Text = FormatHotkey(Settings.HotkeyStopMods, Settings.HotkeyStopKey);
+    }
+
+    private string FormatHotkey(uint modifiers, uint key)
+    {
+        string modStr = "";
+        if ((modifiers & 0x0001) != 0) modStr += "Alt+";
+        if ((modifiers & 0x0002) != 0) modStr += "Ctrl+";
+        if ((modifiers & 0x0004) != 0) modStr += "Shift+";
+
+        // Convert virtual key to string (Using WinForms Keys enum equivalent for simplicity in display, though WPF uses KeyInterop)
+        System.Windows.Forms.Keys keyCode = (System.Windows.Forms.Keys)key;
+        string keyStr = keyCode.ToString();
+
+        // Rakamlar
+        if (keyStr.StartsWith("D") && keyStr.Length == 2 && char.IsDigit(keyStr[1]))
+            keyStr = keyStr.Substring(1);
+
+        return modStr + keyStr;
     }
 
     /// <summary>
@@ -93,7 +117,63 @@ public partial class SettingsWindow : Window
         Settings.ShowNotifications = ShowNotificationsCheck.IsChecked == true;
         Settings.StartInTray = StartInTrayCheck.IsChecked == true;
 
+        // Hotkeys are saved immediately into Settings via HotkeyTextBox_PreviewKeyDown
         IsSaved = true;
+    }
+
+    private void HotkeyTextBox_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (sender is not TextBox txtBox) return;
+
+        // Sadece modifier tuşlar basılmışsa engelle
+        if (e.Key == System.Windows.Input.Key.LeftShift || e.Key == System.Windows.Input.Key.RightShift ||
+            e.Key == System.Windows.Input.Key.LeftCtrl || e.Key == System.Windows.Input.Key.RightCtrl ||
+            e.Key == System.Windows.Input.Key.LeftAlt || e.Key == System.Windows.Input.Key.RightAlt ||
+            e.Key == System.Windows.Input.Key.System) // Alt is often System
+        {
+            e.Handled = true;
+            return;
+        }
+
+        uint modifiers = 0;
+        string modStr = "";
+
+        if (System.Windows.Input.Keyboard.Modifiers.HasFlag(System.Windows.Input.ModifierKeys.Alt)) { modifiers |= 0x0001; modStr += "Alt+"; }
+        if (System.Windows.Input.Keyboard.Modifiers.HasFlag(System.Windows.Input.ModifierKeys.Control)) { modifiers |= 0x0002; modStr += "Ctrl+"; }
+        if (System.Windows.Input.Keyboard.Modifiers.HasFlag(System.Windows.Input.ModifierKeys.Shift)) { modifiers |= 0x0004; modStr += "Shift+"; }
+
+        // Convert WPF Key to Win32 Virtual Key Code
+        int virtualKey = System.Windows.Input.KeyInterop.VirtualKeyFromKey(e.Key == System.Windows.Input.Key.System ? e.SystemKey : e.Key);
+        uint key = (uint)virtualKey;
+        
+        System.Windows.Forms.Keys keyCode = (System.Windows.Forms.Keys)virtualKey;
+        string keyStr = keyCode.ToString();
+
+        // Rakamlar
+        if (keyStr.StartsWith("D") && keyStr.Length == 2 && char.IsDigit(keyStr[1]))
+        {
+            keyStr = keyStr.Substring(1);
+        }
+
+        txtBox.Text = modStr + keyStr;
+
+        if (txtBox == ScreenHotkeyTextBox)
+        {
+            Settings.HotkeyScreenMods = modifiers;
+            Settings.HotkeyScreenKey = key;
+        }
+        else if (txtBox == AudioHotkeyTextBox)
+        {
+            Settings.HotkeyAudioMods = modifiers;
+            Settings.HotkeyAudioKey = key;
+        }
+        else if (txtBox == StopHotkeyTextBox)
+        {
+            Settings.HotkeyStopMods = modifiers;
+            Settings.HotkeyStopKey = key;
+        }
+
+        e.Handled = true;
     }
 
     /// <summary>

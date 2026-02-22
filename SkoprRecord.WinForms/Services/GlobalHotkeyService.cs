@@ -9,7 +9,9 @@ namespace SkoprRecord.WinForms.Services;
 public class GlobalHotkeyService : IDisposable
 {
     private const int WM_HOTKEY = 0x0312;
-    private const int HOTKEY_ID = 9000;
+    private const int HOTKEY_ID_SCREEN = 9001;
+    private const int HOTKEY_ID_AUDIO = 9002;
+    private const int HOTKEY_ID_STOP = 9003;
 
     [DllImport("user32.dll")]
     private static extern bool RegisterHotKey(IntPtr hWnd, int id, uint fsModifiers, uint vk);
@@ -18,26 +20,30 @@ public class GlobalHotkeyService : IDisposable
     private static extern bool UnregisterHotKey(IntPtr hWnd, int id);
 
     private readonly Form _form;
-    private readonly uint _modifiers;
-    private readonly uint _key;
+    private readonly uint _modScreen, _keyScreen;
+    private readonly uint _modAudio, _keyAudio;
+    private readonly uint _modStop, _keyStop;
+    
     private bool _isRegistered;
+    private readonly HotkeyMessageFilter _messageFilter;
 
-    public event EventHandler? HotkeyPressed;
+    public event EventHandler? ScreenRecordingRequested;
+    public event EventHandler? AudioRecordingRequested;
+    public event EventHandler? StopRecordingRequested;
 
     /// <summary>
     /// Global hotkey servisi oluşturur.
     /// </summary>
-    /// <param name="form">Hotkey mesajlarını alacak form</param>
-    /// <param name="virtualKey">Virtual key code (varsayılan: R = 0x52)</param>
-    public GlobalHotkeyService(Form form, uint virtualKey = 0x52)
+    public GlobalHotkeyService(Form form, uint modScreen, uint keyScreen, uint modAudio, uint keyAudio, uint modStop, uint keyStop)
     {
         _form = form;
-        _key = virtualKey;
-        _modifiers = 0x0002 | 0x0004; // MOD_CONTROL | MOD_SHIFT
+        _modScreen = modScreen;    _keyScreen = keyScreen;
+        _modAudio = modAudio;      _keyAudio = keyAudio;
+        _modStop = modStop;        _keyStop = keyStop;
 
         // Form'un WndProc'unu override etmek için NativeWindow kullanıyoruz
-        var messageFilter = new HotkeyMessageFilter(this);
-        System.Windows.Forms.Application.AddMessageFilter(messageFilter);
+        _messageFilter = new HotkeyMessageFilter(this);
+        System.Windows.Forms.Application.AddMessageFilter(_messageFilter);
     }
 
     /// <summary>
@@ -48,7 +54,12 @@ public class GlobalHotkeyService : IDisposable
     {
         if (_isRegistered) return true;
 
-        _isRegistered = RegisterHotKey(_form.Handle, HOTKEY_ID, _modifiers, _key);
+        bool success = true;
+        success &= RegisterHotKey(_form.Handle, HOTKEY_ID_SCREEN, _modScreen, _keyScreen);
+        success &= RegisterHotKey(_form.Handle, HOTKEY_ID_AUDIO, _modAudio, _keyAudio);
+        success &= RegisterHotKey(_form.Handle, HOTKEY_ID_STOP, _modStop, _keyStop);
+        
+        _isRegistered = success;
         return _isRegistered;
     }
 
@@ -59,16 +70,20 @@ public class GlobalHotkeyService : IDisposable
     {
         if (!_isRegistered) return;
 
-        UnregisterHotKey(_form.Handle, HOTKEY_ID);
+        UnregisterHotKey(_form.Handle, HOTKEY_ID_SCREEN);
+        UnregisterHotKey(_form.Handle, HOTKEY_ID_AUDIO);
+        UnregisterHotKey(_form.Handle, HOTKEY_ID_STOP);
         _isRegistered = false;
     }
 
     /// <summary>
     /// Kısayol tuşu tetiklendiğinde event fırlatır.
     /// </summary>
-    internal void OnHotkeyPressed()
+    internal void OnHotkeyPressed(int id)
     {
-        HotkeyPressed?.Invoke(this, EventArgs.Empty);
+        if (id == HOTKEY_ID_SCREEN) ScreenRecordingRequested?.Invoke(this, EventArgs.Empty);
+        else if (id == HOTKEY_ID_AUDIO) AudioRecordingRequested?.Invoke(this, EventArgs.Empty);
+        else if (id == HOTKEY_ID_STOP) StopRecordingRequested?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>
@@ -76,6 +91,7 @@ public class GlobalHotkeyService : IDisposable
     /// </summary>
     public void Dispose()
     {
+        System.Windows.Forms.Application.RemoveMessageFilter(_messageFilter);
         Unregister();
     }
 
@@ -90,10 +106,14 @@ public class GlobalHotkeyService : IDisposable
 
         public bool PreFilterMessage(ref Message m)
         {
-            if (m.Msg == WM_HOTKEY && m.WParam.ToInt32() == HOTKEY_ID)
+            if (m.Msg == WM_HOTKEY)
             {
-                _service.OnHotkeyPressed();
-                return true;
+                int id = m.WParam.ToInt32();
+                if (id == HOTKEY_ID_SCREEN || id == HOTKEY_ID_AUDIO || id == HOTKEY_ID_STOP)
+                {
+                    _service.OnHotkeyPressed(id);
+                    return true;
+                }
             }
             return false;
         }

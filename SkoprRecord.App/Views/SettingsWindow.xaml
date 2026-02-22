@@ -311,12 +311,38 @@
                     <CheckBox x:Name="StartInTrayCheck" Content="Uygulama Başlatıldığında Tepsiye Küçült" Foreground="#CCC" IsChecked="False" Margin="0,5"/>
 
                     <!-- Kısayollar -->
-                    <TextBlock Text="Klavye Kısayolu"
+                    <TextBlock Text="Klavye Kısayolları"
                                Foreground="#4A9EFF"
                                FontWeight="SemiBold"
                                FontSize="14"
                                Margin="0,20,0,10"/>
-                    <TextBlock Text="Kayıt Başlat/Durdur: Ctrl + Shift + R" Foreground="#888" FontSize="12"/>
+                    
+                    <Grid Margin="0,5">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="120"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Ekran Kaydı:" Foreground="#CCC" VerticalAlignment="Center"/>
+                        <TextBox Grid.Column="1" x:Name="ScreenHotkeyTextBox" PreviewKeyDown="HotkeyTextBox_PreviewKeyDown" Background="#2D2D2D" Foreground="#EEE" Padding="8,5" BorderBrush="#444" BorderThickness="1" IsReadOnly="True" Cursor="Hand" ToolTip="Değiştirmek için tıklayıp yeni kısayolu tuşlayın"/>
+                    </Grid>
+
+                    <Grid Margin="0,5">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="120"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Ses Kaydı:" Foreground="#CCC" VerticalAlignment="Center"/>
+                        <TextBox Grid.Column="1" x:Name="AudioHotkeyTextBox" PreviewKeyDown="HotkeyTextBox_PreviewKeyDown" Background="#2D2D2D" Foreground="#EEE" Padding="8,5" BorderBrush="#444" BorderThickness="1" IsReadOnly="True" Cursor="Hand" ToolTip="Değiştirmek için tıklayıp yeni kısayolu tuşlayın"/>
+                    </Grid>
+
+                    <Grid Margin="0,5">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="120"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Kaydı Durdur:" Foreground="#CCC" VerticalAlignment="Center"/>
+                        <TextBox Grid.Column="1" x:Name="StopHotkeyTextBox" PreviewKeyDown="HotkeyTextBox_PreviewKeyDown" Background="#2D2D2D" Foreground="#EEE" Padding="8,5" BorderBrush="#444" BorderThickness="1" IsReadOnly="True" Cursor="Hand" ToolTip="Değiştirmek için tıklayıp yeni kısayolu tuşlayın"/>
+                    </Grid>
 
                 </StackPanel>
             </ScrollViewer>

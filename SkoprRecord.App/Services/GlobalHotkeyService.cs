@@ -11,15 +11,25 @@ namespace SkoprRecord.App.Services;
 public class GlobalHotkeyService : IDisposable
 {
     private const int WM_HOTKEY = 0x0312;
-    private const int MOD_CONTROL = 0x0002;
-    private const int MOD_SHIFT = 0x0004;
+    private const int HOTKEY_ID_SCREEN = 9001;
+    private const int HOTKEY_ID_AUDIO = 9002;
+    private const int HOTKEY_ID_STOP = 9003;
 
-    private readonly int _hotkeyId;
     private readonly IntPtr _windowHandle;
     private HwndSource? _source;
 
-    /// <summary> Tanımlanan kısayol tuşuna basıldığında tetiklenir. </summary>
-    public event EventHandler? HotkeyPressed;
+    private readonly uint _modScreen, _keyScreen;
+    private readonly uint _modAudio, _keyAudio;
+    private readonly uint _modStop, _keyStop;
+
+    /// <summary> Ekran kaydı kısayolu tuşuna basıldığında tetiklenir. </summary>
+    public event EventHandler? ScreenRecordingRequested;
+    
+    /// <summary> Ses kaydı kısayolu tuşuna basıldığında tetiklenir. </summary>
+    public event EventHandler? AudioRecordingRequested;
+    
+    /// <summary> Kaydı durdurma kısayolu tuşuna basıldığında tetiklenir. </summary>
+    public event EventHandler? StopRecordingRequested;
 
     [DllImport("user32.dll")]
     private static extern bool RegisterHotKey(IntPtr hWnd, int id, int fsModifiers, int vk);
@@ -28,11 +38,13 @@ public class GlobalHotkeyService : IDisposable
     private static extern bool UnregisterHotKey(IntPtr hWnd, int id);
 
     /// <summary>
-    /// Pencereye özel bir global kısayol atar. Varsayılan olarak Ctrl+Shift+R ('R' = 0x52).
+    /// Pencereye özel global kısayolları (Ayarlardan gelen) atar.
     /// </summary>
-    public GlobalHotkeyService(Window window, int virtualKey = 0x52)
+    public GlobalHotkeyService(Window window, uint modScreen, uint keyScreen, uint modAudio, uint keyAudio, uint modStop, uint keyStop)
     {
-        _hotkeyId = GetHashCode();
+        _modScreen = modScreen; _keyScreen = keyScreen;
+        _modAudio = modAudio;   _keyAudio = keyAudio;
+        _modStop = modStop;     _keyStop = keyStop;
         _windowHandle = new WindowInteropHelper(window).Handle;
 
         if (_windowHandle == IntPtr.Zero)
@@ -40,25 +52,26 @@ public class GlobalHotkeyService : IDisposable
             window.Loaded += (s, e) =>
             {
                 var handle = new WindowInteropHelper(window).Handle;
-                RegisterHotkeys(handle, virtualKey);
+                RegisterHotkeys(handle);
             };
         }
         else
         {
-            RegisterHotkeys(_windowHandle, virtualKey);
+            RegisterHotkeys(_windowHandle);
         }
     }
 
     /// <summary>
-    /// Belirtilen pencere handle'ı üzerinden Win32 API ile tuş kombinasyonunu kaydeder.
+    /// Belirtilen pencere handle'ı üzerinden Win32 API ile tuş kombinasyonlarını kaydeder.
     /// </summary>
-    private void RegisterHotkeys(IntPtr handle, int virtualKey)
+    private void RegisterHotkeys(IntPtr handle)
     {
         _source = HwndSource.FromHwnd(handle);
         _source?.AddHook(HwndHook);
 
-        // Ctrl + Shift + R
-        RegisterHotKey(handle, _hotkeyId, MOD_CONTROL | MOD_SHIFT, virtualKey);
+        RegisterHotKey(handle, HOTKEY_ID_SCREEN, (int)_modScreen, (int)_keyScreen);
+        RegisterHotKey(handle, HOTKEY_ID_AUDIO, (int)_modAudio, (int)_keyAudio);
+        RegisterHotKey(handle, HOTKEY_ID_STOP, (int)_modStop, (int)_keyStop);
     }
 
     /// <summary>
@@ -66,21 +79,27 @@ public class GlobalHotkeyService : IDisposable
     /// </summary>
     private IntPtr HwndHook(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
     {
-        if (msg == WM_HOTKEY && wParam.ToInt32() == _hotkeyId)
+        if (msg == WM_HOTKEY)
         {
-            HotkeyPressed?.Invoke(this, EventArgs.Empty);
-            handled = true;
+            int id = wParam.ToInt32();
+            if (id == HOTKEY_ID_SCREEN) ScreenRecordingRequested?.Invoke(this, EventArgs.Empty);
+            else if (id == HOTKEY_ID_AUDIO) AudioRecordingRequested?.Invoke(this, EventArgs.Empty);
+            else if (id == HOTKEY_ID_STOP) StopRecordingRequested?.Invoke(this, EventArgs.Empty);
+            
+            handled = (id == HOTKEY_ID_SCREEN || id == HOTKEY_ID_AUDIO || id == HOTKEY_ID_STOP);
         }
         return IntPtr.Zero;
     }
 
     /// <summary>
-    /// Kayıtlı kısayol tuşunu çözer ve mesaj kancasını kaldırır.
+    /// Kayıtlı kısayol tuşlarını çözer ve mesaj kancasını kaldırır.
     /// </summary>
     public void Dispose()
     {
         _source?.RemoveHook(HwndHook);
-        UnregisterHotKey(_windowHandle, _hotkeyId);
+        UnregisterHotKey(_windowHandle, HOTKEY_ID_SCREEN);
+        UnregisterHotKey(_windowHandle, HOTKEY_ID_AUDIO);
+        UnregisterHotKey(_windowHandle, HOTKEY_ID_STOP);
     }
 }
 

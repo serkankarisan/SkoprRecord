@@ -23,6 +23,7 @@ public partial class MainForm : Form
     private GlobalHotkeyService? _hotkeyService;
     private ToolStripMenuItem? _startScreenItem;
     private ToolStripMenuItem? _startAudioItem;
+    private ToolStripMenuItem? _stopRecordingItem;
     private ToolStripMenuItem? _systemAudioItem;
     private ToolStripMenuItem? _microphoneItem;
     private bool _isExiting = false;
@@ -230,6 +231,11 @@ public partial class MainForm : Form
         _startAudioItem.Click += (s, e) => StartAudioRecording();
         contextMenu.Items.Add(_startAudioItem);
 
+        _stopRecordingItem = new ToolStripMenuItem("⏹️ Kaydı Durdur");
+        _stopRecordingItem.Click += (s, e) => StopRecording();
+        _stopRecordingItem.Visible = false;
+        contextMenu.Items.Add(_stopRecordingItem);
+
         contextMenu.Items.Add(new ToolStripSeparator());
 
         _systemAudioItem = new ToolStripMenuItem(_settings.CaptureSystemAudio ? "🔊 Sistem Sesi: Aktif" : "🔊 Sistem Sesi: Kapalı");
@@ -305,7 +311,7 @@ public partial class MainForm : Form
     }
 
     /// <summary>
-    /// Global kısayol tuşunu (Ctrl+Shift+R) kaydeder.
+    /// Global kısayol tuşlarını (Ayarlardan gelen) kaydeder.
     /// </summary>
     /// <remarks>
     /// Başarısız olursa hata loglanır ama uygulama çalışmaya devam eder.
@@ -314,16 +320,29 @@ public partial class MainForm : Form
     {
         try
         {
-            _hotkeyService = new GlobalHotkeyService(this);
-            _hotkeyService.HotkeyPressed += OnHotkeyPressed;
+            if (_hotkeyService != null)
+            {
+                _hotkeyService.Dispose();
+            }
+
+            _hotkeyService = new GlobalHotkeyService(
+                this, 
+                _settings.HotkeyScreenMods, _settings.HotkeyScreenKey,
+                _settings.HotkeyAudioMods, _settings.HotkeyAudioKey,
+                _settings.HotkeyStopMods, _settings.HotkeyStopKey
+            );
+
+            _hotkeyService.ScreenRecordingRequested += OnScreenRecordingRequested;
+            _hotkeyService.AudioRecordingRequested += OnAudioRecordingRequested;
+            _hotkeyService.StopRecordingRequested += OnStopRecordingRequested;
 
             if (_hotkeyService.Register())
             {
-                Log.Information("Global hotkey (Ctrl+Shift+R) kaydedildi.");
+                Log.Information("Global hotkeys kaydedildi.");
             }
             else
             {
-                Log.Warning("Global hotkey kaydedilemedi.");
+                Log.Warning("Global hotkeys kaydedilemedi.");
             }
         }
         catch (Exception ex)
@@ -332,27 +351,22 @@ public partial class MainForm : Form
         }
     }
 
-    /// <summary>
-    /// Global kısayol tuşuna basıldığında kayıt başlatır veya durdurur.
-    /// </summary>
-    private void OnHotkeyPressed(object? sender, EventArgs e)
+    private void OnScreenRecordingRequested(object? sender, EventArgs e)
     {
-        if (InvokeRequired)
-        {
-            Invoke(() => OnHotkeyPressed(sender, e));
-            return;
-        }
+        if (InvokeRequired) { Invoke(() => OnScreenRecordingRequested(sender, e)); return; }
+        if (_controller.CurrentState != Domain.Enums.RecorderState.Recording) StartScreenRecording();
+    }
 
-        bool isRecording = _controller.CurrentState == Domain.Enums.RecorderState.Recording;
+    private void OnAudioRecordingRequested(object? sender, EventArgs e)
+    {
+        if (InvokeRequired) { Invoke(() => OnAudioRecordingRequested(sender, e)); return; }
+        if (_controller.CurrentState != Domain.Enums.RecorderState.Recording) StartAudioRecording();
+    }
 
-        if (isRecording)
-        {
-            StopRecording();
-        }
-        else
-        {
-            StartScreenRecording();
-        }
+    private void OnStopRecordingRequested(object? sender, EventArgs e)
+    {
+        if (InvokeRequired) { Invoke(() => OnStopRecordingRequested(sender, e)); return; }
+        if (_controller.CurrentState == Domain.Enums.RecorderState.Recording) StopRecording();
     }
 
     /// <summary>
@@ -387,6 +401,11 @@ public partial class MainForm : Form
         {
             _startAudioItem.Enabled = !isRecording;
             _startAudioItem.Text = isRecording ? "🎵 Ses Kaydı (Kayıt Devam Ediyor)" : "🎵 Ses Kaydı Başlat";
+        }
+
+        if (_stopRecordingItem != null)
+        {
+            _stopRecordingItem.Visible = isRecording;
         }
     }
 
@@ -762,6 +781,7 @@ public partial class MainForm : Form
             _settings = settingsClone;
             _settingsService.Save(_settings);
             _controller.Settings = _settings;
+            SetupGlobalHotkey(); // Kısayol tuşlarını güncelle
             UpdateUI();
         }
     }

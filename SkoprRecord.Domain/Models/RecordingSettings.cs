@@ -56,6 +56,26 @@ public class RecordingSettings
     /// <summary> Uygulama başlangıçta sistem tepsisinde (tray) mi başlasın? </summary>
     public bool StartInTray { get; set; } = false;
 
+    // --- Kısayol (Hotkey) Ayarları ---
+
+    /// <summary> Ekran kaydı başlatma kısayolu için değiştirici tuşlar (Örn: Alt + Shift -> 1 | 4 = 5) </summary>
+    public uint HotkeyScreenMods { get; set; } = 0x0001 | 0x0004; // Alt (1) + Shift (4)
+
+    /// <summary> Ekran kaydı başlatma kısayolu tuşu (Örn: R) </summary>
+    public uint HotkeyScreenKey { get; set; } = 0x52; // R tuşu
+
+    /// <summary> Ses kaydı başlatma kısayolu için değiştirici tuşlar </summary>
+    public uint HotkeyAudioMods { get; set; } = 0x0001 | 0x0004; // Alt + Shift
+
+    /// <summary> Ses kaydı başlatma kısayolu tuşu (Örn: A) </summary>
+    public uint HotkeyAudioKey { get; set; } = 0x41; // A tuşu
+
+    /// <summary> Kaydı durdurma kısayolu için değiştirici tuşlar </summary>
+    public uint HotkeyStopMods { get; set; } = 0x0001 | 0x0004; // Alt + Shift
+
+    /// <summary> Kaydı durdurma kısayolu tuşu (Örn: S) </summary>
+    public uint HotkeyStopKey { get; set; } = 0x53; // S tuşu
+
     /// <summary>
     /// Ayar nesnesinin yüzeysel bir kopyasını oluşturur.
     /// </summary>

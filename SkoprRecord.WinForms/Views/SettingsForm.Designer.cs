@@ -38,6 +38,13 @@ namespace SkoprRecord.WinForms.Views
             this.chkStartInTray = new System.Windows.Forms.CheckBox();
             this.chkShowNotifications = new System.Windows.Forms.CheckBox();
             this.chkConfirmSaveOnStop = new System.Windows.Forms.CheckBox();
+            this.lblHotkeys = new System.Windows.Forms.Label();
+            this.lblHotkeyScreen = new System.Windows.Forms.Label();
+            this.txtHotkeyScreen = new System.Windows.Forms.TextBox();
+            this.lblHotkeyAudio = new System.Windows.Forms.Label();
+            this.txtHotkeyAudio = new System.Windows.Forms.TextBox();
+            this.lblHotkeyStop = new System.Windows.Forms.Label();
+            this.txtHotkeyStop = new System.Windows.Forms.TextBox();
             this.pnlButtons = new System.Windows.Forms.Panel();
             this.btnSave = new System.Windows.Forms.Button();
             this.btnCancel = new System.Windows.Forms.Button();
@@ -277,6 +284,13 @@ namespace SkoprRecord.WinForms.Views
             this.pnlTabGeneral.Controls.Add(this.chkConfirmSaveOnStop);
             this.pnlTabGeneral.Controls.Add(this.chkShowNotifications);
             this.pnlTabGeneral.Controls.Add(this.chkStartInTray);
+            this.pnlTabGeneral.Controls.Add(this.lblHotkeys);
+            this.pnlTabGeneral.Controls.Add(this.lblHotkeyScreen);
+            this.pnlTabGeneral.Controls.Add(this.txtHotkeyScreen);
+            this.pnlTabGeneral.Controls.Add(this.lblHotkeyAudio);
+            this.pnlTabGeneral.Controls.Add(this.txtHotkeyAudio);
+            this.pnlTabGeneral.Controls.Add(this.lblHotkeyStop);
+            this.pnlTabGeneral.Controls.Add(this.txtHotkeyStop);
             this.pnlTabGeneral.Dock = System.Windows.Forms.DockStyle.Fill;
             this.pnlTabGeneral.Location = new System.Drawing.Point(0, 85);
             this.pnlTabGeneral.Name = "pnlTabGeneral";
@@ -317,6 +331,82 @@ namespace SkoprRecord.WinForms.Views
             this.chkConfirmSaveOnStop.TabIndex = 2;
             this.chkConfirmSaveOnStop.Text = "Durdurulduğunda Kaydetmeyi Onayla";
             this.chkConfirmSaveOnStop.UseVisualStyleBackColor = true;
+            // 
+            // lblHotkeys
+            // 
+            this.lblHotkeys.AutoSize = true;
+            this.lblHotkeys.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(85)))), ((int)(((byte)(85)))));
+            this.lblHotkeys.Location = new System.Drawing.Point(20, 130);
+            this.lblHotkeys.Name = "lblHotkeys";
+            this.lblHotkeys.Size = new System.Drawing.Size(120, 19);
+            this.lblHotkeys.TabIndex = 3;
+            this.lblHotkeys.Text = "Kısayol Tuşları:";
+            // 
+            // lblHotkeyScreen
+            // 
+            this.lblHotkeyScreen.AutoSize = true;
+            this.lblHotkeyScreen.ForeColor = System.Drawing.Color.White;
+            this.lblHotkeyScreen.Location = new System.Drawing.Point(20, 160);
+            this.lblHotkeyScreen.Name = "lblHotkeyScreen";
+            this.lblHotkeyScreen.Size = new System.Drawing.Size(80, 19);
+            this.lblHotkeyScreen.TabIndex = 4;
+            this.lblHotkeyScreen.Text = "Ekran Kaydı:";
+            // 
+            // txtHotkeyScreen
+            // 
+            this.txtHotkeyScreen.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(45)))), ((int)(((byte)(45)))), ((int)(((byte)(65)))));
+            this.txtHotkeyScreen.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.txtHotkeyScreen.ForeColor = System.Drawing.Color.White;
+            this.txtHotkeyScreen.Location = new System.Drawing.Point(120, 158);
+            this.txtHotkeyScreen.Name = "txtHotkeyScreen";
+            this.txtHotkeyScreen.ReadOnly = true;
+            this.txtHotkeyScreen.Size = new System.Drawing.Size(160, 25);
+            this.txtHotkeyScreen.TabIndex = 5;
+            this.txtHotkeyScreen.KeyDown += new System.Windows.Forms.KeyEventHandler(this.HotkeyTextBox_KeyDown);
+            // 
+            // lblHotkeyAudio
+            // 
+            this.lblHotkeyAudio.AutoSize = true;
+            this.lblHotkeyAudio.ForeColor = System.Drawing.Color.White;
+            this.lblHotkeyAudio.Location = new System.Drawing.Point(20, 195);
+            this.lblHotkeyAudio.Name = "lblHotkeyAudio";
+            this.lblHotkeyAudio.Size = new System.Drawing.Size(70, 19);
+            this.lblHotkeyAudio.TabIndex = 6;
+            this.lblHotkeyAudio.Text = "Ses Kaydı:";
+            // 
+            // txtHotkeyAudio
+            // 
+            this.txtHotkeyAudio.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(45)))), ((int)(((byte)(45)))), ((int)(((byte)(65)))));
+            this.txtHotkeyAudio.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.txtHotkeyAudio.ForeColor = System.Drawing.Color.White;
+            this.txtHotkeyAudio.Location = new System.Drawing.Point(120, 193);
+            this.txtHotkeyAudio.Name = "txtHotkeyAudio";
+            this.txtHotkeyAudio.ReadOnly = true;
+            this.txtHotkeyAudio.Size = new System.Drawing.Size(160, 25);
+            this.txtHotkeyAudio.TabIndex = 7;
+            this.txtHotkeyAudio.KeyDown += new System.Windows.Forms.KeyEventHandler(this.HotkeyTextBox_KeyDown);
+            // 
+            // lblHotkeyStop
+            // 
+            this.lblHotkeyStop.AutoSize = true;
+            this.lblHotkeyStop.ForeColor = System.Drawing.Color.White;
+            this.lblHotkeyStop.Location = new System.Drawing.Point(20, 230);
+            this.lblHotkeyStop.Name = "lblHotkeyStop";
+            this.lblHotkeyStop.Size = new System.Drawing.Size(60, 19);
+            this.lblHotkeyStop.TabIndex = 8;
+            this.lblHotkeyStop.Text = "Durdur:";
+            // 
+            // txtHotkeyStop
+            // 
+            this.txtHotkeyStop.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(45)))), ((int)(((byte)(45)))), ((int)(((byte)(65)))));
+            this.txtHotkeyStop.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.txtHotkeyStop.ForeColor = System.Drawing.Color.White;
+            this.txtHotkeyStop.Location = new System.Drawing.Point(120, 228);
+            this.txtHotkeyStop.Name = "txtHotkeyStop";
+            this.txtHotkeyStop.ReadOnly = true;
+            this.txtHotkeyStop.Size = new System.Drawing.Size(160, 25);
+            this.txtHotkeyStop.TabIndex = 9;
+            this.txtHotkeyStop.KeyDown += new System.Windows.Forms.KeyEventHandler(this.HotkeyTextBox_KeyDown);
             // 
             // pnlButtons
             // 
@@ -413,6 +503,13 @@ namespace SkoprRecord.WinForms.Views
         private CheckBox chkStartInTray;
         private CheckBox chkShowNotifications;
         private CheckBox chkConfirmSaveOnStop;
+        private Label lblHotkeys;
+        private Label lblHotkeyScreen;
+        private TextBox txtHotkeyScreen;
+        private Label lblHotkeyAudio;
+        private TextBox txtHotkeyAudio;
+        private Label lblHotkeyStop;
+        private TextBox txtHotkeyStop;
         private Panel pnlButtons;
         private Button btnSave;
         private Button btnCancel;
